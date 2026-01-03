@@ -17,10 +17,10 @@ public class Adr {
     @JsonProperty("tx_power")
     private Integer txPower;
 
-    public Adr() {
-    }
+    public Adr() {}
 
-    public Adr(Integer datarate, Boolean enabled, Integer maxTxPower, String mode, Integer txPower) {
+    public Adr(
+            Integer datarate, Boolean enabled, Integer maxTxPower, String mode, Integer txPower) {
         this.datarate = datarate;
         this.enabled = enabled;
         this.maxTxPower = maxTxPower;

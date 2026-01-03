@@ -1,14 +1,9 @@
 package br.rafaeros.aura.modules.device.model;
 
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import br.rafaeros.aura.modules.device.client.dto.EverynetDevice;
 import br.rafaeros.aura.modules.user.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +15,9 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -57,8 +55,11 @@ public class Device {
     @JsonIgnore
     private List<User> users;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    @JoinTable(name = "device_tags", joinColumns = @JoinColumn(name = "device_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "device_tags",
+            joinColumns = @JoinColumn(name = "device_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<DeviceTag> tags = new ArrayList<>();
 
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -73,11 +74,19 @@ public class Device {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    public Device() {
-    }
+    public Device() {}
 
-    public Device(Long id, String name, String devEui, String devAddr, String appEui, String nwksKey, String appsKey,
-            List<User> users, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public Device(
+            Long id,
+            String name,
+            String devEui,
+            String devAddr,
+            String appEui,
+            String nwksKey,
+            String appsKey,
+            List<User> users,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.devEui = devEui;
@@ -140,5 +149,4 @@ public class Device {
         this.positions.add(position);
         position.setDevice(this);
     }
-
 }

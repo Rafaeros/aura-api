@@ -1,9 +1,6 @@
 package br.rafaeros.aura.modules.device.model;
 
-import java.time.OffsetDateTime;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "device_position")
@@ -34,8 +32,7 @@ public class DevicePosition {
     @JsonIgnore
     private Device device;
 
-    public DevicePosition() {
-    }
+    public DevicePosition() {}
 
     public Long getId() {
         return id;

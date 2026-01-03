@@ -1,7 +1,5 @@
 package br.rafaeros.aura.modules.device.model;
 
-import java.time.OffsetDateTime;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "device_feature")
@@ -32,10 +31,14 @@ public class DeviceFeature {
     @JoinColumn(name = "device_id")
     private Device device;
 
-    public DeviceFeature() {
-    }
+    public DeviceFeature() {}
 
-    public DeviceFeature(Long id, String name, String value, OffsetDateTime createdAt, OffsetDateTime updatedAt,
+    public DeviceFeature(
+            Long id,
+            String name,
+            String value,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt,
             Device device) {
         this.id = id;
         this.name = name;

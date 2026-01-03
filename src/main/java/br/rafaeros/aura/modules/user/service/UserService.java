@@ -8,13 +8,10 @@ import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
-
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Objects;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -23,7 +20,8 @@ public class UserService {
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repository,
+    public UserService(
+            UserRepository repository,
             CompanyRepository companyRepository,
             PasswordEncoder passwordEncoder) {
         this.repository = repository;
@@ -42,8 +40,13 @@ public class UserService {
             throw new BusinessException("Company ID is required.");
         }
 
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + companyId));
+        Company company =
+                companyRepository
+                        .findById(companyId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Company not found with ID: " + companyId));
 
         User newUser = new User();
         newUser.setUsername(dto.username());
@@ -56,13 +59,15 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User findById(long id) {
-        return repository.findById(id)
+        return repository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional(readOnly = true)
     public User findByUsername(String username) {
-        return repository.findByUsername(username)
+        return repository
+                .findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
@@ -72,13 +77,19 @@ public class UserService {
             throw new BusinessException("User ID cannot be null for update.");
         }
 
-        User user = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+        User user =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "User not found with ID: " + id));
 
         if (dto.username() != null && !dto.username().isBlank()) {
             if (!dto.username().equals(user.getUsername())) {
                 if (repository.existsByUsername(dto.username())) {
-                    throw new BusinessException("The username '" + dto.username() + "' is already in use.");
+                    throw new BusinessException(
+                            "The username '" + dto.username() + "' is already in use.");
                 }
                 user.setUsername(dto.username());
             }

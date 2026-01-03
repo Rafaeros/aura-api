@@ -3,13 +3,18 @@ package br.rafaeros.aura.modules.device.controller;
 import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
 import br.rafaeros.aura.modules.device.model.Device;
 import br.rafaeros.aura.modules.device.service.DeviceService;
-
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/devices")
@@ -25,8 +30,7 @@ public class DeviceController {
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'OWNER')")
     public ResponseEntity<?> create(
-            @RequestBody DeviceCreateDTO dto,
-            Authentication authentication) {
+            @RequestBody DeviceCreateDTO dto, Authentication authentication) {
         Device savedDevice = deviceService.createDevice(dto, authentication.getName());
         return ResponseEntity.ok(savedDevice);
     }

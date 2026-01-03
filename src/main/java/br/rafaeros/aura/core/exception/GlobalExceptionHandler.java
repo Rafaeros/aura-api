@@ -1,6 +1,9 @@
 package br.rafaeros.aura.core.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,10 +13,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,11 +36,14 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex, HttpServletRequest request) {
 
         Map<String, String> validationErrors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            validationErrors.put(fieldName, errorMessage);
-        });
+        ex.getBindingResult()
+                .getAllErrors()
+                .forEach(
+                        (error) -> {
+                            String fieldName = ((FieldError) error).getField();
+                            String errorMessage = error.getDefaultMessage();
+                            validationErrors.put(fieldName, errorMessage);
+                        });
 
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
@@ -66,11 +68,7 @@ public class GlobalExceptionHandler {
         }
 
         return buildErrorResponse(
-                HttpStatus.CONFLICT,
-                Severity.WARNING,
-                "Duplicate Entry",
-                message,
-                request);
+                HttpStatus.CONFLICT, Severity.WARNING, "Duplicate Entry", message, request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

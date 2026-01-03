@@ -11,8 +11,7 @@ public class Geolocation {
     private Integer precision;
     private Integer quality;
 
-    public Geolocation() {
-    }
+    public Geolocation() {}
 
     public Double getLat() {
         return lat;

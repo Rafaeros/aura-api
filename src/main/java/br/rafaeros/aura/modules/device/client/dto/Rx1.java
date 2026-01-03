@@ -6,36 +6,35 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Rx1 {
 
-  @JsonProperty("current_delay")
-  private Integer currentDelay;
+    @JsonProperty("current_delay")
+    private Integer currentDelay;
 
-  private Integer delay; // Era int, agora é Integer (aceita null)
-  private String status;
+    private Integer delay;
+    private String status;
 
-  public Rx1() {
-  }
+    public Rx1() {}
 
-  public Integer getCurrentDelay() {
-    return currentDelay;
-  }
+    public Integer getCurrentDelay() {
+        return currentDelay;
+    }
 
-  public void setCurrentDelay(Integer currentDelay) {
-    this.currentDelay = currentDelay;
-  }
+    public void setCurrentDelay(Integer currentDelay) {
+        this.currentDelay = currentDelay;
+    }
 
-  public Integer getDelay() {
-    return delay;
-  }
+    public Integer getDelay() {
+        return delay;
+    }
 
-  public void setDelay(Integer delay) {
-    this.delay = delay;
-  }
+    public void setDelay(Integer delay) {
+        this.delay = delay;
+    }
 
-  public String getStatus() {
-    return status;
-  }
+    public String getStatus() {
+        return status;
+    }
 
-  public void setStatus(String status) {
-    this.status = status;
-  }
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

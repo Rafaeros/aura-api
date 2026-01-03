@@ -1,15 +1,14 @@
 package br.rafaeros.aura.core.seeder;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
-
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 @Component
 public class AdminUserSeeder implements CommandLineRunner {

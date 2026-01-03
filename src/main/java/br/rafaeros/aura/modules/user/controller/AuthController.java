@@ -5,10 +5,12 @@ import br.rafaeros.aura.core.security.JwtService;
 import br.rafaeros.aura.modules.user.controller.dto.AuthRequest;
 import br.rafaeros.aura.modules.user.controller.dto.AuthResponse;
 import br.rafaeros.aura.modules.user.model.User;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
@@ -33,15 +35,13 @@ public class AuthController {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()));
+                        request.getUsername(), request.getPassword()));
 
         User user = userDetailsService.loadDomainUser(request.getUsername());
 
-        String token = jwtService.generateToken(
-                user.getUsername(),
-                user.getCompany().getId(),
-                user.getRole().name());
+        String token =
+                jwtService.generateToken(
+                        user.getUsername(), user.getCompany().getId(), user.getRole().name());
 
         return new AuthResponse(token);
     }

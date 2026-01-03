@@ -8,8 +8,7 @@ public class MqttLogDTO {
     private Map<String, String> params;
     private Map<String, String> meta;
 
-    public MqttLogDTO() {
-    }
+    public MqttLogDTO() {}
 
     public MqttLogDTO(String type, Map<String, String> params, Map<String, String> meta) {
         this.type = type;
@@ -40,5 +39,4 @@ public class MqttLogDTO {
     public void setMeta(Map<String, String> meta) {
         this.meta = meta;
     }
-
 }

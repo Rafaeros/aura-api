@@ -1,7 +1,5 @@
 package br.rafaeros.aura.modules.telemetry.model;
 
-import java.time.OffsetDateTime;
-
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.device.model.Device;
 import jakarta.persistence.Column;
@@ -12,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "mqtt_log")

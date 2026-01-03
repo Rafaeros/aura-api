@@ -1,9 +1,6 @@
 package br.rafaeros.aura.modules.company.model;
 
-import java.time.OffsetDateTime;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,6 +11,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "company_integration_settings")
@@ -46,11 +44,17 @@ public class CompanySettings {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public CompanySettings() {
-    }
+    public CompanySettings() {}
 
-    public CompanySettings(Long id, Company company, String everynetAccessToken, String mqttHost,
-            Integer mqttPort, String mqttUsername, String mqttPassword, OffsetDateTime updatedAt) {
+    public CompanySettings(
+            Long id,
+            Company company,
+            String everynetAccessToken,
+            String mqttHost,
+            Integer mqttPort,
+            String mqttUsername,
+            String mqttPassword,
+            OffsetDateTime updatedAt) {
         this.id = id;
         this.company = company;
         this.everynetAccessToken = everynetAccessToken;

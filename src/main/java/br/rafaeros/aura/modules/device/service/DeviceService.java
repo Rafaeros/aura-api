@@ -16,14 +16,13 @@ import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -31,19 +30,17 @@ public class DeviceService {
 
     private final DeviceRepository deviceRepository;
 
-    @Autowired
-    private DeviceTagRepository tagRepository;
+    @Autowired private DeviceTagRepository tagRepository;
 
-    @Autowired
-    private DevicePositionRepository positionRepository;
+    @Autowired private DevicePositionRepository positionRepository;
 
     private final UserRepository userRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
     private final EverynetClient everynetClient;
 
-    public DeviceService(DeviceRepository deviceRepository,
+    public DeviceService(
+            DeviceRepository deviceRepository,
             UserRepository userRepository,
             EverynetClient everynetClient,
             DevicePositionRepository positionRepository) {
@@ -63,13 +60,19 @@ public class DeviceService {
         if (id == null) {
             throw new BusinessException("Device ID is required.");
         }
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found with ID: " + id));
+        Device device =
+                deviceRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Device not found with ID: " + id));
 
         Hibernate.initialize(device.getTags());
         Hibernate.initialize(device.getFeatures());
         entityManager.detach(device);
-        List<DevicePosition> last5Positions = positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
+        List<DevicePosition> last5Positions =
+                positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
         device.setPositions(last5Positions);
 
         return device;
@@ -77,14 +80,20 @@ public class DeviceService {
 
     @Transactional
     public Device createDevice(DeviceCreateDTO dto, String username) {
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        User currentUser =
+                userRepository
+                        .findByUsername(username)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("User not found: " + username));
 
-        Device device = deviceRepository.findByDevEui(dto.devEui())
-                .orElseGet(() -> fetchAndCreateFromEverynet(dto));
+        Device device =
+                deviceRepository
+                        .findByDevEui(dto.devEui())
+                        .orElseGet(() -> fetchAndCreateFromEverynet(dto));
 
         if (currentUser.getDevices().contains(device)) {
-            throw new BusinessException("Device " + dto.devEui() + " is already linked to your account.");
+            throw new BusinessException(
+                    "Device " + dto.devEui() + " is already linked to your account.");
         }
 
         currentUser.getDevices().add(device);
@@ -100,11 +109,19 @@ public class DeviceService {
             throw new BusinessException("Device ID is required.");
         }
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        User user =
+                userRepository
+                        .findByUsername(username)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("User not found: " + username));
 
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found with ID: " + deviceId));
+        Device device =
+                deviceRepository
+                        .findById(deviceId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Device not found with ID: " + deviceId));
 
         if (user.getDevices().contains(device)) {
             user.getDevices().remove(device);
@@ -122,7 +139,8 @@ public class DeviceService {
             EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui());
 
             if (externalData == null) {
-                throw new ResourceNotFoundException("Device not found in Everynet network: " + dto.devEui());
+                throw new ResourceNotFoundException(
+                        "Device not found in Everynet network: " + dto.devEui());
             }
 
             Device newDevice = Device.createFromEverynet(externalData, dto.name());
@@ -139,15 +157,18 @@ public class DeviceService {
             if (ex instanceof ResourceNotFoundException || ex instanceof IntegrationException) {
                 throw ex;
             }
-            throw new IntegrationException("External service unavailable or returned invalid data: " + ex.getMessage());
+            throw new IntegrationException(
+                    "External service unavailable or returned invalid data: " + ex.getMessage());
         }
     }
 
     private void processTagsAndPosition(Device device, EverynetDevice externalData) {
         if (externalData.getTags() != null) {
             for (String tagName : externalData.getTags()) {
-                DeviceTag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(new DeviceTag(tagName)));
+                DeviceTag tag =
+                        tagRepository
+                                .findByName(tagName)
+                                .orElseGet(() -> tagRepository.save(new DeviceTag(tagName)));
                 device.addTag(tag);
             }
         }

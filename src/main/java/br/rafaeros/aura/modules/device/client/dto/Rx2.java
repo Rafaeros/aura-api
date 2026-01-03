@@ -7,8 +7,7 @@ public class Rx2 {
 
     private Boolean force;
 
-    public Rx2() {
-    }
+    public Rx2() {}
 
     public Rx2(Boolean force) {
         this.force = force;
