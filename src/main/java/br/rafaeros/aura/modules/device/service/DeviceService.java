@@ -1,6 +1,8 @@
 package br.rafaeros.aura.modules.device.service;
 
-import lombok.extern.slf4j.Slf4j;
+import br.rafaeros.aura.core.exception.BusinessException;
+import br.rafaeros.aura.core.exception.IntegrationException;
+import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.device.client.EverynetClient;
 import br.rafaeros.aura.modules.device.client.dto.EverynetDevice;
 import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
@@ -14,7 +16,7 @@ import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -52,6 +53,7 @@ public class DeviceService {
         this.positionRepository = positionRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<Device> listMyDevices(String username) {
         return deviceRepository.findAllByUsername(username);
     }
@@ -59,68 +61,85 @@ public class DeviceService {
     @Transactional(readOnly = true)
     public Device findById(Long id, String username) {
         if (id == null) {
-            throw new IllegalArgumentException("Device id must be provided");
+            throw new BusinessException("Device ID is required.");
         }
-
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Device not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found with ID: " + id));
 
         Hibernate.initialize(device.getTags());
         Hibernate.initialize(device.getFeatures());
-
         entityManager.detach(device);
-
         List<DevicePosition> last5Positions = positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
-
         device.setPositions(last5Positions);
 
         return device;
     }
 
     @Transactional
-    public Device registerDevice(DeviceCreateDTO dto, String username) {
+    public Device createDevice(DeviceCreateDTO dto, String username) {
         User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         Device device = deviceRepository.findByDevEui(dto.devEui())
-                .orElseGet(() -> {
-                    log.info("Device not found locally. Fetching from Everynet: {}", dto.devEui());
+                .orElseGet(() -> fetchAndCreateFromEverynet(dto));
 
-                    EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui());
-                    Device newDevice = Objects.requireNonNull(Device.createFromEverynet(externalData, dto.name()),
-                            "Failed to create device from Everynet data");
-                    processTagsAndPosition(newDevice, externalData);
-                    return deviceRepository.save(newDevice);
-                });
-
-        if (!currentUser.getDevices().contains(device)) {
-            currentUser.getDevices().add(device);
-            userRepository.save(currentUser);
-            log.info("Device {} linked to user {}", dto.devEui(), username);
-        } else {
-            log.warn("Device {} is already linked to user {}", dto.devEui(), username);
+        if (currentUser.getDevices().contains(device)) {
+            throw new BusinessException("Device " + dto.devEui() + " is already linked to your account.");
         }
+
+        currentUser.getDevices().add(device);
+        userRepository.save(currentUser);
+        log.info("Device {} linked to user {}", dto.devEui(), username);
 
         return device;
     }
 
     @Transactional
     public void unlinkDevice(Long deviceId, String username) {
-
         if (deviceId == null) {
-            throw new IllegalArgumentException("Device id must be provided");
+            throw new BusinessException("Device ID is required.");
         }
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new RuntimeException("Device not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found with ID: " + deviceId));
 
         if (user.getDevices().contains(device)) {
             user.getDevices().remove(device);
             userRepository.save(user);
             log.info("Device {} unlinked from user {}", deviceId, username);
+        } else {
+            throw new BusinessException("This device is not linked to your account.");
+        }
+    }
+
+    private Device fetchAndCreateFromEverynet(DeviceCreateDTO dto) {
+        log.info("Device not found locally. Fetching from Everynet: {}", dto.devEui());
+
+        try {
+            EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui());
+
+            if (externalData == null) {
+                throw new ResourceNotFoundException("Device not found in Everynet network: " + dto.devEui());
+            }
+
+            Device newDevice = Device.createFromEverynet(externalData, dto.name());
+
+            if (newDevice == null) {
+                throw new IntegrationException("Failed to map Everynet data to Device entity.");
+            }
+
+            processTagsAndPosition(newDevice, externalData);
+            return deviceRepository.save(newDevice);
+
+        } catch (Exception ex) {
+            log.error("Error integrating with Everynet", ex);
+            if (ex instanceof ResourceNotFoundException || ex instanceof IntegrationException) {
+                throw ex;
+            }
+            throw new IntegrationException("External service unavailable or returned invalid data: " + ex.getMessage());
         }
     }
 
@@ -140,5 +159,4 @@ public class DeviceService {
             device.addPosition(pos);
         }
     }
-
 }

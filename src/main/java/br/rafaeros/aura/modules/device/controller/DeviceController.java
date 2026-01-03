@@ -27,7 +27,7 @@ public class DeviceController {
     public ResponseEntity<?> create(
             @RequestBody DeviceCreateDTO dto,
             Authentication authentication) {
-        Device savedDevice = deviceService.registerDevice(dto, authentication.getName());
+        Device savedDevice = deviceService.createDevice(dto, authentication.getName());
         return ResponseEntity.ok(savedDevice);
     }
 

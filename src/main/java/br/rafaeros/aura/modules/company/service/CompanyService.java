@@ -1,14 +1,15 @@
 package br.rafaeros.aura.modules.company.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import br.rafaeros.aura.core.exception.BusinessException;
+import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.controller.dto.CompanyDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CompanyService {
@@ -22,8 +23,9 @@ public class CompanyService {
     @Transactional
     public Company create(CompanyDTO dto) {
         if (companyRepository.existsByCnpj(dto.cnpj())) {
-            throw new IllegalArgumentException("Company with cnpj " + dto.cnpj() + " already exists");
+            throw new BusinessException("Company with CNPJ " + dto.cnpj() + " already exists.");
         }
+
         Company company = new Company(dto.name(), dto.cnpj(), dto.cep(), dto.addressNumber());
         return companyRepository.save(company);
     }
@@ -36,30 +38,40 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public Company findById(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("Company id must be provided");
+            throw new BusinessException("Company ID is required.");
         }
         return companyRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Company not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + id));
     }
 
     @Transactional
-    public Company update(Long id, Company company) {
+    public Company update(Long id, CompanyDTO dto) {
+        if (id == null) {
+            throw new BusinessException("Company ID is required for update.");
+        }
+
         Company existing = findById(id);
+        if (dto.cnpj() != null && !dto.cnpj().isBlank()) {
+            if (!dto.cnpj().equals(existing.getCnpj())) {
+                if (companyRepository.existsByCnpj(dto.cnpj())) {
+                    throw new BusinessException("The CNPJ " + dto.cnpj() + " is already in use by another company.");
+                }
+                existing.setCnpj(dto.cnpj());
+            }
+        }
+        if (dto.name() != null)
+            existing.setName(dto.name());
+        if (dto.cep() != null)
+            existing.setCep(dto.cep());
+        if (dto.addressNumber() != null)
+            existing.setAddressNumber(dto.addressNumber());
 
-        existing.setName(company.getName());
-        existing.setCnpj(company.getCnpj());
-        existing.setCep(company.getCep());
-        existing.setAddressNumber(company.getAddressNumber());
-
-        return companyRepository.save(existing);
+        return companyRepository.save(Objects.requireNonNull(existing));
     }
 
     @Transactional
     public void deleteById(Long id) {
         Company company = findById(id);
-        if (company == null) {
-            throw new EntityNotFoundException("Company not found");
-        }
-        companyRepository.delete(company);
+        companyRepository.delete(Objects.requireNonNull(company));
     }
 }

@@ -45,7 +45,7 @@ public class CompanyController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Company> update(@PathVariable Long id, @Valid @RequestBody Company company) {
+    public ResponseEntity<Company> update(@PathVariable Long id, @Valid @RequestBody CompanyDTO company) {
         Company updated = companyService.update(id, company);
         return ResponseEntity.ok(updated);
     }
