@@ -1,17 +1,17 @@
 package br.rafaeros.aura.core.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+// ATENÇÃO AOS IMPORTS DO SPRING SECURITY AQUI:
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import jakarta.servlet.http.HttpServletRequest; // Importante para pegar o Path
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.naming.AuthenticationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -19,42 +19,40 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(
             ResourceNotFoundException ex, HttpServletRequest request) {
-
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.NOT_FOUND.value());
-        error.put("error", "Resource Not Found");
-        error.put("message", ex.getMessage());
-        error.put("path", request.getRequestURI());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Resource Not Found", ex.getMessage(), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request) {
-
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.FORBIDDEN.value());
-        error.put("error", "Forbidden");
-        error.put("message", "Access Denied: you don't have permission to access this resource.");
-        error.put("path", request.getRequestURI());
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", "Access Denied: You don't have permission.",
+                request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             AuthenticationException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentication Failed.", request);
+    }
 
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.UNAUTHORIZED.value());
-        error.put("error", "Unauthorized");
-        error.put("message", "Authentication Failed: " + ex.getMessage());
-        error.put("path", request.getRequestURI());
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(
+            Exception ex, HttpServletRequest request) {
+        ex.printStackTrace();
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected error occurred: " + ex.getMessage(), request);
+    }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(
+            HttpStatus status, String error, String message, HttpServletRequest request) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", error);
+        body.put("message", message);
+        body.put("path", request.getRequestURI());
+
+        return ResponseEntity.status(status).body(body);
     }
 }

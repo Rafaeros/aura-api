@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/error/**").permitAll()
                         .requestMatchers("/devices/**").authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
