@@ -29,7 +29,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> create(@RequestBody UserCreateDTO dto) {
+    public ResponseEntity<User> create(@Valid@ RequestBody UserCreateDTO dto) {
         return ResponseEntity.ok(userService.create(dto));
     }
 
