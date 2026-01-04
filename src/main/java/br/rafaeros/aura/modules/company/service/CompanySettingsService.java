@@ -1,5 +1,10 @@
 package br.rafaeros.aura.modules.company.service;
 
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsDTO;
@@ -8,9 +13,6 @@ import br.rafaeros.aura.modules.company.model.CompanySettings;
 import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
-import java.util.Objects;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CompanySettingsService {
@@ -25,33 +27,31 @@ public class CompanySettingsService {
     }
 
     @Transactional(readOnly = true)
-    public CompanySettings getByCompanyId(Long companyId) {
-        if (companyId == null) {
-            throw new BusinessException("Company ID is required.");
+    public CompanySettings getByUserEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCompany() == null) {
+            throw new BusinessException("User is not linked to any company.");
         }
-        return repository
-                .findByCompanyId(companyId)
-                .orElseThrow(
-                        () ->
-                                new ResourceNotFoundException(
-                                        "Settings not found for company ID: " + companyId));
+
+        Long companyId = user.getCompany().getId();
+
+        return repository.findByCompanyId(companyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Settings not found for company ID: " + companyId));
     }
 
     @Transactional
-    public CompanySettings saveOrUpdate(String username, CompanySettingsDTO dto) {
-        User user =
-                userRepository
-                        .findByUsername(username)
-                        .orElseThrow(
-                                () -> new ResourceNotFoundException("User not found: " + username));
+    public CompanySettings saveOrUpdate(String email, CompanySettingsDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
 
         Company userCompany = user.getCompany();
         if (userCompany == null) {
             throw new BusinessException("User is not linked to any company.");
         }
-
-        CompanySettings settings =
-                repository.findByCompanyId(userCompany.getId()).orElse(new CompanySettings());
+        CompanySettings settings = repository.findByCompanyId(userCompany.getId())
+                .orElse(new CompanySettings());
 
         if (settings.getId() == null) {
             settings.setCompany(userCompany);

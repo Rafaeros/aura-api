@@ -1,9 +1,8 @@
 package br.rafaeros.aura.modules.device.controller;
 
-import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
-import br.rafaeros.aura.modules.device.model.Device;
-import br.rafaeros.aura.modules.device.service.DeviceService;
 import java.util.List;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,6 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
+import br.rafaeros.aura.modules.device.model.Device;
+import br.rafaeros.aura.modules.device.service.DeviceService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/devices")
@@ -28,33 +32,30 @@ public class DeviceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'OWNER')")
-    public ResponseEntity<?> create(
-            @RequestBody DeviceCreateDTO dto, Authentication authentication) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'OWNER')")
+    public ResponseEntity<Device> create(
+            @RequestBody @Valid DeviceCreateDTO dto, Authentication authentication) {
+
         Device savedDevice = deviceService.createDevice(dto, authentication.getName());
-        return ResponseEntity.ok(savedDevice);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedDevice);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Device>> getAll(Authentication authentication) {
-        List<Device> devices = deviceService.listMyDevices(authentication.getName());
+        List<Device> devices = deviceService.listDevicesSmart(authentication.getName());
         return ResponseEntity.ok(devices);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@userSecurity.canManageDevice(authentication, #id)")
-    public ResponseEntity<?> getById(@PathVariable Long id, Authentication authentication) {
-        try {
-            Device device = deviceService.findById(id, authentication.getName());
-            return ResponseEntity.ok(device);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Device> getById(@PathVariable Long id, Authentication authentication) {
+        Device device = deviceService.findById(id, authentication.getName());
+        return ResponseEntity.ok(device);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @userSecurity.canManageDevice(authentication, #id)")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
         deviceService.unlinkDevice(id, authentication.getName());
         return ResponseEntity.noContent().build();
