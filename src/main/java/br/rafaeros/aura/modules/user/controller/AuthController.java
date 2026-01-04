@@ -1,10 +1,7 @@
 package br.rafaeros.aura.modules.user.controller;
 
-import br.rafaeros.aura.core.security.CustomUserDetailsService;
-import br.rafaeros.aura.core.security.JwtService;
-import br.rafaeros.aura.modules.user.controller.dto.AuthRequest;
-import br.rafaeros.aura.modules.user.controller.dto.AuthResponse;
-import br.rafaeros.aura.modules.user.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,37 +9,33 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.rafaeros.aura.core.exception.ResourceNotFoundException;
+import br.rafaeros.aura.core.security.JwtService;
+import br.rafaeros.aura.modules.user.controller.dto.AuthRequest;
+import br.rafaeros.aura.modules.user.controller.dto.AuthResponse;
+import br.rafaeros.aura.modules.user.repository.UserRepository;
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
-
-    public AuthController(
-            AuthenticationManager authenticationManager,
-            JwtService jwtService,
-            CustomUserDetailsService userDetailsService) {
-
-        this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest request) {
-
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(), request.getPassword()));
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        var user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        User user = userDetailsService.loadDomainUser(request.getUsername());
+        String token = jwtService.generateToken(user);
 
-        String token =
-                jwtService.generateToken(
-                        user.getUsername(), user.getCompany().getId(), user.getRole().name());
-
-        return new AuthResponse(token);
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 }

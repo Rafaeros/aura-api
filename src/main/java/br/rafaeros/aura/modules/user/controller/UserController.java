@@ -1,10 +1,5 @@
 package br.rafaeros.aura.modules.user.controller;
 
-import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
-import br.rafaeros.aura.modules.user.model.User;
-import br.rafaeros.aura.modules.user.service.UserService;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +10,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
+import br.rafaeros.aura.modules.user.model.User;
+import br.rafaeros.aura.modules.user.service.UserService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/user")
@@ -30,6 +31,12 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> create(@Valid @RequestBody UserCreateDTO dto) {
         return ResponseEntity.ok(userService.create(dto));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Iterable<User>> getAll() {
+        return ResponseEntity.ok(userService.findAll());
     }
 
     @GetMapping("/{id}")

@@ -27,8 +27,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String username;
+
+    @Column(nullable = false)
+    private String email;
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -44,20 +47,20 @@ public class User {
     private Company company;
 
     @ManyToMany
-    @JoinTable(
-            name = "user_device",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "device_id"))
+    @JoinTable(name = "user_device", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "device_id"))
     @JsonIgnore
     private List<Device> devices;
 
-    public User() {}
+    public User() {
+    }
 
-    public User(String username, String password, Role role, Company company) {
+    public User(String username, String email, String password, Role role, Company company, List<Device> devices) {
         this.username = username;
+        this.email = email;
         this.password = password;
         this.role = role;
         this.company = company;
+        this.devices = devices;
     }
 
     public Long getId() {
@@ -74,6 +77,14 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -107,4 +118,5 @@ public class User {
     public void setDevices(List<Device> devices) {
         this.devices = devices;
     }
+
 }

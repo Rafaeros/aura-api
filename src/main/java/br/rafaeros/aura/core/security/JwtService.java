@@ -1,15 +1,18 @@
 package br.rafaeros.aura.core.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import br.rafaeros.aura.modules.user.model.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
@@ -20,11 +23,11 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    public String generateToken(String username, Long companyId, String role) {
+    public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(username)
-                .claim("companyId", companyId)
-                .claim("role", role)
+                .setSubject(user.getEmail())
+                .claim("companyId", user.getCompany().getId())
+                .claim("role", user.getRole().name())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)

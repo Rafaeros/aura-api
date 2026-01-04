@@ -1,5 +1,11 @@
 package br.rafaeros.aura.modules.user.service;
 
+import java.util.Objects;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.model.Company;
@@ -8,10 +14,6 @@ import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
-import java.util.Objects;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -31,24 +33,23 @@ public class UserService {
 
     @Transactional
     public User create(UserCreateDTO dto) {
+        if (repository.existsByEmail(dto.email())) {
+            throw new BusinessException("Email '" + dto.email() + "' is already in use.");
+        }
+
         if (repository.existsByUsername(dto.username())) {
-            throw new BusinessException("User" + dto.username() + " already exists");
+            throw new BusinessException("Username '" + dto.username() + "' is already taken.");
         }
 
         Long companyId = dto.companyId();
         if (companyId == null) {
             throw new BusinessException("Company ID is required.");
         }
-
-        Company company =
-                companyRepository
-                        .findById(companyId)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "Company not found with ID: " + companyId));
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + companyId));
 
         User newUser = new User();
+        newUser.setEmail(dto.email());
         newUser.setUsername(dto.username());
         newUser.setRole(dto.role());
         newUser.setCompany(company);
@@ -58,38 +59,42 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User findById(long id) {
-        return repository
-                .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public Iterable<User> findAll() {
+        return repository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public User findByUsername(String username) {
-        return repository
-                .findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public User findById(long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
 
     @Transactional
     public User update(Long id, UserUpdateDTO dto) {
-        if (id == null) {
-            throw new BusinessException("User ID cannot be null for update.");
-        }
+        if (id == null)
+            throw new BusinessException("User ID is required.");
 
-        User user =
-                repository
-                        .findById(id)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotFoundException(
-                                                "User not found with ID: " + id));
+        User user = findById(id);
+
+        if (dto.email() != null && !dto.email().isBlank()) {
+            if (!dto.email().equals(user.getEmail())) {
+                if (repository.existsByEmail(dto.email())) {
+                    throw new BusinessException("The email '" + dto.email() + "' is already in use.");
+                }
+                user.setEmail(dto.email());
+            }
+        }
 
         if (dto.username() != null && !dto.username().isBlank()) {
             if (!dto.username().equals(user.getUsername())) {
                 if (repository.existsByUsername(dto.username())) {
-                    throw new BusinessException(
-                            "The username '" + dto.username() + "' is already in use.");
+                    throw new BusinessException("The username '" + dto.username() + "' is already taken.");
                 }
                 user.setUsername(dto.username());
             }
