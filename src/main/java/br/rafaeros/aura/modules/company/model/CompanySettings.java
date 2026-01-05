@@ -1,7 +1,12 @@
 package br.rafaeros.aura.modules.company.model;
 
+import java.time.OffsetDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import br.rafaeros.aura.core.security.CryptoConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,7 +16,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "company_integration_settings")
@@ -27,6 +31,7 @@ public class CompanySettings {
     private Company company;
 
     @Column(name = "everynet_access_token")
+    @Convert(converter = CryptoConverter.class)
     private String everynetAccessToken;
 
     @Column(name = "mqtt_host")
@@ -39,12 +44,14 @@ public class CompanySettings {
     private String mqttUsername;
 
     @Column(name = "mqtt_password")
+    @Convert(converter = CryptoConverter.class)
     private String mqttPassword;
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public CompanySettings() {}
+    public CompanySettings() {
+    }
 
     public CompanySettings(
             Long id,

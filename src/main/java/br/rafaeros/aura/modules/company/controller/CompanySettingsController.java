@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +16,7 @@ import br.rafaeros.aura.modules.company.service.CompanySettingsService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/company/settings")
+@RequestMapping("/company")
 public class CompanySettingsController {
 
     private final CompanySettingsService service;
@@ -24,18 +25,19 @@ public class CompanySettingsController {
         this.service = service;
     }
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'USER')")
-    public ResponseEntity<CompanySettings> get(Authentication auth) {
-        return ResponseEntity.ok(service.getByUserEmail(auth.getName()));
+    @GetMapping("/{companyId}/settings")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CompanySettings> get(@PathVariable Long companyId, Authentication auth) {
+        return ResponseEntity.ok(service.findByCompanyId(companyId, auth.getName()));
     }
 
-    @PostMapping
+    @PostMapping("/{companyId}/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<CompanySettings> save(
+    public ResponseEntity<CompanySettings> updateSettings(
+            @PathVariable Long companyId,
             @Valid @RequestBody CompanySettingsDTO dto, Authentication auth) {
 
-        CompanySettings saved = service.saveOrUpdate(auth.getName(), dto);
+        CompanySettings saved = service.updateByCompanyId(companyId, dto, auth.getName());
         return ResponseEntity.ok(saved);
     }
 }
