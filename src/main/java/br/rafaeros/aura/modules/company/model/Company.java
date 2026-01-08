@@ -1,7 +1,10 @@
 package br.rafaeros.aura.modules.company.model;
 
-import br.rafaeros.aura.modules.user.model.User;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import br.rafaeros.aura.modules.user.model.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +18,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 
 @Entity
 @Table(name = "company")
@@ -45,15 +47,13 @@ public class Company {
     @JsonIgnore
     private List<User> users;
 
-    @OneToOne(
-            mappedBy = "company",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY)
-    @JsonIgnore
-    private CompanySettings integrationSettings;
+    @OneToOne(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 
-    public Company() {}
+    @JsonIgnore
+    private CompanySettings settings;
+
+    public Company() {
+    }
 
     public Company(String name, String cnpj, String cep, Integer addressNumber) {
         this.name = name;
@@ -102,15 +102,15 @@ public class Company {
         return users;
     }
 
-    public CompanySettings getIntegrationSettings() {
-        return integrationSettings;
+    public CompanySettings getSettings() {
+        return settings;
     }
 
-    public void setIntegrationSettings(CompanySettings integrationSettings) {
-        this.integrationSettings = integrationSettings;
+    public void setSettings(CompanySettings settings) {
+        this.settings = settings;
 
-        if (integrationSettings != null) {
-            integrationSettings.setCompany(this);
+        if (settings != null) {
+            settings.setCompany(this);
         }
     }
 }

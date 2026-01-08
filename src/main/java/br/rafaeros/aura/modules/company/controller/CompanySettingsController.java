@@ -16,7 +16,7 @@ import br.rafaeros.aura.modules.company.service.CompanySettingsService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/company")
+@RequestMapping("/companies")
 public class CompanySettingsController {
 
     private final CompanySettingsService service;

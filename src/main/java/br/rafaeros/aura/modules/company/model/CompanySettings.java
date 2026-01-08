@@ -18,7 +18,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "company_integration_settings")
+@Table(name = "company_settings")
 public class CompanySettings {
 
     @Id

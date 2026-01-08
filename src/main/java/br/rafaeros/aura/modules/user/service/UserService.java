@@ -11,6 +11,7 @@ import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
 import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
@@ -73,6 +74,13 @@ public class UserService {
     public User findByEmail(String email) {
         return repository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileDTO findUserProfile(String email) {
+        var user = repository.findyProfileByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        return UserProfileDTO.fromEntity(user);
     }
 
     @Transactional

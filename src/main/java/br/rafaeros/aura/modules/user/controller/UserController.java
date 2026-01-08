@@ -1,5 +1,6 @@
 package br.rafaeros.aura.modules.user.controller;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,13 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.service.UserService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
@@ -31,6 +33,12 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> create(@Valid @RequestBody UserCreateDTO dto) {
         return ResponseEntity.ok(userService.create(dto));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication) {
+        return ResponseEntity.ok(userService.findUserProfile(authentication.getName()));
     }
 
     @GetMapping
