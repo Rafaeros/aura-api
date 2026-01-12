@@ -1,5 +1,7 @@
 package br.rafaeros.aura.modules.user.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.model.CompanySettings;
 import br.rafaeros.aura.modules.user.model.User;
@@ -36,16 +38,23 @@ record CompanyProfileDTO(
 
 record CompanySettingsDTO(
         Long id,
-        String everynetAccessToken,
-        String mqttHost,
-        Integer mqttPort,
-        String mqttUsername) {
+
+        @JsonProperty("everynet_access_token") String everynetAccessToken,
+
+        @JsonProperty("mqtt_host") String mqttHost,
+
+        @JsonProperty("mqtt_port") Integer mqttPort,
+
+        @JsonProperty("mqtt_username") String mqttUsername,
+
+        @JsonProperty("mqtt_password") String mqttPassword) {
     public static CompanySettingsDTO fromEntity(CompanySettings settings) {
         return new CompanySettingsDTO(
                 settings.getId(),
                 settings.getEverynetAccessToken(),
                 settings.getMqttHost(),
                 settings.getMqttPort(),
-                settings.getMqttUsername());
+                settings.getMqttUsername(),
+                settings.getMqttPassword());
     }
 }

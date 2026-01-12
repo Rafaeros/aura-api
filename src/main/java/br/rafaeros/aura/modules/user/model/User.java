@@ -16,7 +16,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Entity
@@ -51,6 +55,18 @@ public class User {
     @JsonIgnore
     private List<Device> devices;
 
+    @JsonProperty("is_first_access")
+    private boolean isFirstAccess;
+
+    @JsonProperty("is_active")
+    private boolean isActive;
+
+    @JsonProperty("created_at")
+    private OffsetDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private OffsetDateTime updatedAt;
+
     public User() {
     }
 
@@ -61,6 +77,20 @@ public class User {
         this.role = role;
         this.company = company;
         this.devices = devices;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = OffsetDateTime.now();
+        if (!this.isActive) {
+            this.isActive = true;
+        }
+        this.isFirstAccess = true;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = OffsetDateTime.now();
     }
 
     public Long getId() {
@@ -117,6 +147,38 @@ public class User {
 
     public void setDevices(List<Device> devices) {
         this.devices = devices;
+    }
+
+    public boolean isFirstAccess() {
+        return isFirstAccess;
+    }
+
+    public void setFirstAccess(boolean isFirstAccess) {
+        this.isFirstAccess = isFirstAccess;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
 }

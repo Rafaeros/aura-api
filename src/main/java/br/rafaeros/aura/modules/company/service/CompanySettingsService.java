@@ -34,15 +34,37 @@ public class CompanySettingsService {
     }
 
     @Transactional(readOnly = true)
-    public CompanySettings findByCompanyId(Long companyId, String userEmail) {
+    public CompanySettings findMyCompanySettings(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCompany() == null) {
+            throw new BusinessException("User is not associated with a company.");
+        }
+
+        return findByCompanyId(user.getCompany().getId());
+    }
+
+    @Transactional
+    public CompanySettings updateMyCompanySettings(String email, CompanySettingsDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCompany() == null) {
+            throw new BusinessException("User is not associated with a company.");
+        }
+
+        return updateByCompanyId(user.getCompany().getId(), dto, email);
+    }
+
+    @Transactional(readOnly = true)
+    public CompanySettings findByCompanyId(Long companyId) {
         if (companyId == null)
             throw new BusinessException("Company ID is required.");
 
         if (!companyRepository.existsById(companyId)) {
             throw new ResourceNotFoundException("Company not found with ID: " + companyId);
         }
-
-        validateAccess(companyId, userEmail);
 
         return settingsRepository.findByCompanyId(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Settings not found for company ID: " + companyId));
@@ -51,10 +73,10 @@ public class CompanySettingsService {
     @Transactional
     public CompanySettings updateByCompanyId(Long companyId, CompanySettingsDTO dto, String userEmail) {
         if (companyId == null)
-            throw new BusinessException("Company ID is required.");
+            throw new BusinessException("Company ID is required");
 
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + companyId));
+                .orElseThrow(() -> new ResourceNotFoundException("Company not found"));
 
         validateAccess(companyId, userEmail);
 
@@ -65,11 +87,16 @@ public class CompanySettingsService {
             settings.setCompany(company);
         }
 
+        settings.setCompany(company);
         settings.setEverynetAccessToken(dto.everynetAccessToken());
         settings.setMqttHost(dto.mqttHost());
         settings.setMqttPort(dto.mqttPort());
         settings.setMqttUsername(dto.mqttUsername());
-        settings.setMqttPassword(dto.mqttPassword());
+
+        if (dto.mqttPassword() != null && !dto.mqttPassword().isEmpty()) {
+            settings.setMqttPassword(dto.mqttPassword());
+        }
+        ;
 
         return settingsRepository.save(Objects.requireNonNull(settings));
     }

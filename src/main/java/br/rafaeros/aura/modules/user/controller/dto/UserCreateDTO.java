@@ -18,9 +18,6 @@ public record UserCreateDTO(
         @Size(max = 50, message = "Email must be at most 50 characters long")
         String email,
 
-        @NotBlank(message = "Password is required")
-        @Size(min = 6, max = 50, message = "Password must be at least 6 characters long")
-        String password,
 
         @NotNull(message = "Role is required")
         Role role,

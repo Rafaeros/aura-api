@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 public class EverynetProperties {
 
     private String baseUrl;
-    private String apiToken;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -16,13 +15,5 @@ public class EverynetProperties {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
-    }
-
-    public String getApiToken() {
-        return apiToken;
-    }
-
-    public void setApiToken(String apiToken) {
-        this.apiToken = apiToken;
     }
 }

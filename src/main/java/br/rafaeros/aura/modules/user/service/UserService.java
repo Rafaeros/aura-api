@@ -10,6 +10,7 @@ import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
+import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
 import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
@@ -22,10 +23,12 @@ public class UserService {
     private final UserRepository repository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final String DEFAULT_PASSWORD = "Mudar@123";
 
     public UserService(
             UserRepository repository,
             CompanyRepository companyRepository,
+            CompanySettingsRepository companySettingsRepository,
             PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.companyRepository = companyRepository;
@@ -54,7 +57,7 @@ public class UserService {
         newUser.setUsername(dto.username());
         newUser.setRole(dto.role());
         newUser.setCompany(company);
-        newUser.setPassword(passwordEncoder.encode(dto.password()));
+        newUser.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
         return repository.save(newUser);
     }
@@ -80,6 +83,7 @@ public class UserService {
     public UserProfileDTO findUserProfile(String email) {
         var user = repository.findyProfileByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
         return UserProfileDTO.fromEntity(user);
     }
 
@@ -122,4 +126,5 @@ public class UserService {
         }
         repository.deleteById(id);
     }
+
 }

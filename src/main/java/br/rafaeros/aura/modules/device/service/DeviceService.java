@@ -2,6 +2,7 @@ package br.rafaeros.aura.modules.device.service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.IntegrationException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
+import br.rafaeros.aura.modules.company.model.Company;
+import br.rafaeros.aura.modules.company.model.CompanySettings;
 import br.rafaeros.aura.modules.device.client.EverynetClient;
 import br.rafaeros.aura.modules.device.client.dto.EverynetDevice;
 import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
@@ -100,8 +103,15 @@ public class DeviceService {
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Device device = deviceRepository.findByDevEui(dto.devEui())
-                .orElseGet(() -> fetchAndCreateFromEverynet(dto));
+        Optional<Device> existingDevice = deviceRepository.findByDevEui(dto.devEui());
+        Device device;
+
+        if (existingDevice.isPresent()) {
+            device = existingDevice.get();
+        } else {
+            String apiToken = extractCompanyApiToken(currentUser);
+            device = fetchAndCreateFromEverynet(dto, apiToken);
+        }
 
         if (currentUser.getDevices().contains(device)) {
             throw new BusinessException("Device " + dto.devEui() + " is already linked to your account.");
@@ -141,9 +151,24 @@ public class DeviceService {
         }
     }
 
-    private Device fetchAndCreateFromEverynet(DeviceCreateDTO dto) {
+    private String extractCompanyApiToken(User user) {
+        Company company = user.getCompany();
+        if (company == null)
+            throw new BusinessException("User is not associated with a company.");
+
+        CompanySettings settings = company.getSettings();
+        if (settings == null || settings.getEverynetAccessToken() == null
+                || settings.getEverynetAccessToken().isEmpty()) {
+            throw new BusinessException("Company settings (Everynet Integration) are not configured properly.");
+        }
+        ;
+
+        return settings.getEverynetAccessToken();
+    }
+
+    private Device fetchAndCreateFromEverynet(DeviceCreateDTO dto, String apiToken) {
         try {
-            EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui());
+            EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui(), apiToken);
             if (externalData == null)
                 throw new ResourceNotFoundException("Device not found in Everynet: " + dto.devEui());
 
