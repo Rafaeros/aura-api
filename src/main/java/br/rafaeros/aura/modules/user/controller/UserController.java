@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
+import br.rafaeros.aura.modules.user.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.dto.UserProfileDTO;
+import br.rafaeros.aura.modules.user.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.service.UserService;
 import jakarta.validation.Valid;
@@ -38,7 +38,7 @@ public class UserController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication) {
-        return ResponseEntity.ok(userService.findUserProfile(authentication.getName()));
+        return ResponseEntity.ok(userService.findUserProfile(authentication));
     }
 
     @GetMapping

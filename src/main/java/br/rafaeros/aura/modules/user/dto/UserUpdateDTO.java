@@ -1,4 +1,4 @@
-package br.rafaeros.aura.modules.user.controller.dto;
+package br.rafaeros.aura.modules.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;

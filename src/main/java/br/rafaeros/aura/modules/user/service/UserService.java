@@ -2,18 +2,22 @@ package br.rafaeros.aura.modules.user.service;
 
 import java.util.Objects;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
 import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
-import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
+import br.rafaeros.aura.modules.user.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.dto.UserProfileDTO;
+import br.rafaeros.aura.modules.user.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
 
@@ -80,11 +84,37 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserProfileDTO findUserProfile(String email) {
-        var user = repository.findyProfileByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    public UserProfileDTO findUserProfile(Authentication authentication) {
+        String email = authentication.getName();
 
-        return UserProfileDTO.fromEntity(user);
+        boolean isAdminOrOwner = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_OWNER"));
+
+        User user = repository.findyProfileByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+
+        UserProfileDTO dto = UserProfileDTO.fromEntity(user);
+
+        if (!isAdminOrOwner && dto.company() != null && dto.company().settings() != null) {
+
+            CompanySettingsResponseDTO maskedSettings = dto.company().settings().maskSecrets();
+
+            CompanyResponseDTO maskedCompany = new CompanyResponseDTO(
+                    dto.company().id(),
+                    dto.company().name(),
+                    dto.company().cnpj(),
+                    dto.company().cep(),
+                    maskedSettings);
+
+            dto = new UserProfileDTO(
+                    dto.id(),
+                    dto.username(),
+                    dto.email(),
+                    maskedCompany);
+        }
+
+        return dto;
     }
 
     @Transactional
