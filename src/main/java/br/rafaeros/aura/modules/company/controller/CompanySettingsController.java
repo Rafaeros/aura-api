@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.aura.core.exception.BusinessException;
-import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsDTO;
-import br.rafaeros.aura.modules.company.model.CompanySettings;
+import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsRequestDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
 import br.rafaeros.aura.modules.company.service.CompanySettingsService;
 import br.rafaeros.aura.modules.user.service.UserService;
 import jakarta.validation.Valid;
@@ -29,18 +29,18 @@ public class CompanySettingsController {
         this.userService = userService;
     }
 
+    // User
     @GetMapping("/current/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<CompanySettings> getMySettings(Authentication auth) {
-        CompanySettings settings = service.findMyCompanySettings(auth.getName());
-
+    public ResponseEntity<CompanySettingsResponseDTO> getMySettings(Authentication auth) {
+        CompanySettingsResponseDTO settings = service.findMyCompanySettings(auth.getName());
         return ResponseEntity.ok(settings);
     }
 
     @PostMapping("/current/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<CompanySettings> updateMySettings(
-            @Valid @RequestBody CompanySettingsDTO dto, Authentication auth) {
+    public ResponseEntity<CompanySettingsResponseDTO> updateMySettings(
+            @Valid @RequestBody CompanySettingsRequestDTO dto, Authentication auth) {
 
         var user = userService.findByEmail(auth.getName());
 
@@ -48,23 +48,24 @@ public class CompanySettingsController {
             throw new BusinessException("User is not associated with a company.");
         }
 
-        CompanySettings saved = service.updateByCompanyId(user.getCompany().getId(), dto, auth.getName());
+        CompanySettingsResponseDTO saved = service.updateByCompanyId(user.getCompany().getId(), dto, auth.getName());
         return ResponseEntity.ok(saved);
     }
 
+    // Admin
     @GetMapping("/{companyId}/settings")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CompanySettings> get(@PathVariable Long companyId, Authentication auth) {
+    public ResponseEntity<CompanySettingsResponseDTO> get(@PathVariable Long companyId, Authentication auth) {
         return ResponseEntity.ok(service.findByCompanyId(companyId));
     }
 
     @PostMapping("/{companyId}/settings")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<CompanySettings> updateSettings(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CompanySettingsResponseDTO> updateSettings(
             @PathVariable Long companyId,
-            @Valid @RequestBody CompanySettingsDTO dto, Authentication auth) {
+            @Valid @RequestBody CompanySettingsRequestDTO dto, Authentication auth) {
 
-        CompanySettings saved = service.updateByCompanyId(companyId, dto, auth.getName());
+        CompanySettingsResponseDTO saved = service.updateByCompanyId(companyId, dto, auth.getName());
         return ResponseEntity.ok(saved);
     }
 }

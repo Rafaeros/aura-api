@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
-import br.rafaeros.aura.modules.company.controller.dto.CompanyDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyRequestDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
 import br.rafaeros.aura.modules.user.model.User;
@@ -28,7 +28,7 @@ public class CompanyService {
     }
 
     @Transactional
-    public Company create(CompanyDTO dto) {
+    public Company create(CompanyRequestDTO dto) {
         if (companyRepository.existsByCnpj(dto.cnpj())) {
             throw new BusinessException("Company with CNPJ " + dto.cnpj() + " already exists.");
         }
@@ -70,7 +70,7 @@ public class CompanyService {
     }
 
     @Transactional
-    public Company update(Long id, CompanyDTO dto) {
+    public Company update(Long id, CompanyRequestDTO dto) {
         if (id == null)
             throw new BusinessException("Company ID is required.");
 

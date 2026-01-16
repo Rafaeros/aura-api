@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CompanySettingsDTO(
+public record CompanySettingsRequestDTO(
         @NotBlank(message = "Everynet token is required") 
         @JsonProperty("everynet_access_token")
         String everynetAccessToken,

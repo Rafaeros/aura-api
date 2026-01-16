@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.rafaeros.aura.modules.company.controller.dto.CompanyDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyRequestDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.service.CompanyService;
 import jakarta.validation.Valid;
@@ -32,7 +32,7 @@ public class CompanyController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Company> create(@Valid @RequestBody CompanyDTO company) {
+    public ResponseEntity<Company> create(@Valid @RequestBody CompanyRequestDTO company) {
         Company saved = companyService.create(company);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -53,7 +53,7 @@ public class CompanyController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Company> update(
-            @PathVariable Long id, @Valid @RequestBody CompanyDTO company) {
+            @PathVariable Long id, @Valid @RequestBody CompanyRequestDTO company) {
         Company updated = companyService.update(id, company);
         return ResponseEntity.ok(updated);
     }
