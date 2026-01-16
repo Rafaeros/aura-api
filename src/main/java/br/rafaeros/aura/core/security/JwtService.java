@@ -26,8 +26,9 @@ public class JwtService {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("companyId", user.getCompany().getId())
+                .claim("username", user.getUsername())
                 .claim("role", user.getRole().name())
+                .claim("companyId", user.getCompany().getId())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
