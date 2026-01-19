@@ -1,8 +1,9 @@
 package br.rafaeros.aura.modules.company.service;
 
-import java.util.List;
 import java.util.Objects;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.controller.dto.CompanyRequestDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
 import br.rafaeros.aura.modules.user.model.User;
@@ -28,21 +30,30 @@ public class CompanyService {
     }
 
     @Transactional
-    public Company create(CompanyRequestDTO dto) {
+    public CompanyResponseDTO create(CompanyRequestDTO dto) {
         if (companyRepository.existsByCnpj(dto.cnpj())) {
             throw new BusinessException("Company with CNPJ " + dto.cnpj() + " already exists.");
         }
-        Company company = new Company(dto.name(), dto.cnpj(), dto.cep(), dto.addressNumber());
-        return companyRepository.save(company);
+        Company company = new Company();
+        company.setName(dto.name());
+        company.setCnpj(dto.cnpj());
+        company.setCep(dto.cep());
+        company.setAddressNumber(dto.addressNumber());
+
+        Company saved = companyRepository.save(company);
+
+        return CompanyResponseDTO.fromEntity(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<Company> findAll() {
-        return companyRepository.findAll();
+    public Page<CompanyResponseDTO> findAll(Pageable pageable) {
+        Pageable safePageable = Objects.requireNonNull(pageable);
+        return companyRepository.findAll(safePageable)
+                .map(CompanyResponseDTO::fromEntity);
     }
 
     @Transactional(readOnly = true)
-    public Company findById(Long id, String email) {
+    public CompanyResponseDTO findById(Long id, String email) {
         if (id == null)
             throw new BusinessException("Company ID is required.");
 
@@ -59,7 +70,7 @@ public class CompanyService {
             throw new AccessDeniedException("Access denied: You do not belong to this company.");
         }
 
-        return company;
+        return CompanyResponseDTO.fromEntity(company);
     }
 
     private Company findByIdInternal(Long id) {
@@ -70,7 +81,7 @@ public class CompanyService {
     }
 
     @Transactional
-    public Company update(Long id, CompanyRequestDTO dto) {
+    public CompanyResponseDTO update(Long id, CompanyRequestDTO dto) {
         if (id == null)
             throw new BusinessException("Company ID is required.");
 
@@ -91,7 +102,16 @@ public class CompanyService {
         if (dto.addressNumber() != null)
             existing.setAddressNumber(dto.addressNumber());
 
-        return companyRepository.save(Objects.requireNonNull(existing));
+        Company updated = companyRepository.save(Objects.requireNonNull(existing));
+
+        return CompanyResponseDTO.fromEntity(updated);
+    }
+
+    @Transactional
+    public void toggleActive(Long id) {
+        Company company = findByIdInternal(id);
+        company.setIsActive(!company.getIsActive());
+        companyRepository.save(Objects.requireNonNull(company));
     }
 
     @Transactional

@@ -1,8 +1,11 @@
 package br.rafaeros.aura.modules.user.controller;
 
-import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.rafaeros.aura.modules.user.dto.UserCreateDTO;
-import br.rafaeros.aura.modules.user.dto.UserProfileDTO;
-import br.rafaeros.aura.modules.user.dto.UserUpdateDTO;
-import br.rafaeros.aura.modules.user.model.User;
+import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserResponseDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.service.UserService;
 import jakarta.validation.Valid;
 
@@ -31,7 +34,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> create(@Valid @RequestBody UserCreateDTO dto) {
+    public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserCreateDTO dto) {
         return ResponseEntity.ok(userService.create(dto));
     }
 
@@ -43,19 +46,20 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Iterable<User>> getAll() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<Page<UserResponseDTO>> getAll(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        return ResponseEntity.ok(userService.findAll(pageable));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@userSecurity.isSelfOrAdmin(authentication, #id)")
-    public ResponseEntity<User> getById(@PathVariable long id) {
-        return ResponseEntity.ok(userService.findById(id));
+    public ResponseEntity<UserResponseDTO> getById(@PathVariable long id) {
+        UserResponseDTO user = userService.findById(id);
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("@userSecurity.isSelfOrAdmin(authentication, #id)")
-    public ResponseEntity<User> update(
+    public ResponseEntity<UserResponseDTO> update(
             @PathVariable Long id, @Valid @RequestBody UserUpdateDTO dto) {
         return ResponseEntity.ok(userService.update(id, dto));
     }

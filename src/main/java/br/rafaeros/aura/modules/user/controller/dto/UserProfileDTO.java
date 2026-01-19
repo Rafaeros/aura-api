@@ -1,4 +1,4 @@
-package br.rafaeros.aura.modules.user.dto;
+package br.rafaeros.aura.modules.user.controller.dto;
 
 import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
 import br.rafaeros.aura.modules.user.model.User;

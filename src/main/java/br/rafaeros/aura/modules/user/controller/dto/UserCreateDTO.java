@@ -1,4 +1,4 @@
-package br.rafaeros.aura.modules.user.dto;
+package br.rafaeros.aura.modules.user.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -17,7 +17,6 @@ public record UserCreateDTO(
         @Email(message = "Invalid email format")
         @Size(max = 50, message = "Email must be at most 50 characters long")
         String email,
-
 
         @NotNull(message = "Role is required")
         Role role,

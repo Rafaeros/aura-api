@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.modules.user.model.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -18,10 +19,14 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Setter;
+import lombok.Getter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "company")
-public class Company {
+public class Company extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,6 +48,9 @@ public class Company {
     @Column(name = "address_number")
     private Integer addressNumber;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<User> users;
@@ -55,62 +63,11 @@ public class Company {
     public Company() {
     }
 
-    public Company(String name, String cnpj, String cep, Integer addressNumber) {
-        this.name = name;
-        this.cnpj = cnpj;
-        this.cep = cep;
-        this.addressNumber = addressNumber;
+    public boolean getIsActive() {
+        return isActive;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public String getCep() {
-        return cep;
-    }
-
-    public void setCep(String cep) {
-        this.cep = cep;
-    }
-
-    public Integer getAddressNumber() {
-        return addressNumber;
-    }
-
-    public void setAddressNumber(Integer addressNumber) {
-        this.addressNumber = addressNumber;
-    }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public CompanySettings getSettings() {
-        return settings;
-    }
-
-    public void setSettings(CompanySettings settings) {
-        this.settings = settings;
-
-        if (settings != null) {
-            settings.setCompany(this);
-        }
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }

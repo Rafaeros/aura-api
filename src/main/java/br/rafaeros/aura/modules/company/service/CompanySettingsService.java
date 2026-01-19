@@ -94,6 +94,8 @@ public class CompanySettingsService {
         settings.setMqttHost(dto.mqttHost());
         settings.setMqttPort(dto.mqttPort());
         settings.setMqttUsername(dto.mqttUsername());
+        settings.setSubscribeTopic(dto.subscribeTopic());
+        settings.setPublishTopic(dto.publishTopic());
 
         if (dto.mqttPassword() != null && !dto.mqttPassword().isEmpty()) {
             settings.setMqttPassword(dto.mqttPassword());

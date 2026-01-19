@@ -1,11 +1,12 @@
 package br.rafaeros.aura.modules.device.service;
 
-import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +18,19 @@ import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.model.CompanySettings;
 import br.rafaeros.aura.modules.device.client.EverynetClient;
 import br.rafaeros.aura.modules.device.client.dto.EverynetDevice;
-import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateDTO;
+import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateRequestDTO;
+import br.rafaeros.aura.modules.device.controller.dto.DeviceDetailsResponseDTO;
+import br.rafaeros.aura.modules.device.controller.dto.DeviceListResponseDTO;
 import br.rafaeros.aura.modules.device.model.Device;
 import br.rafaeros.aura.modules.device.model.DevicePosition;
 import br.rafaeros.aura.modules.device.model.DeviceTag;
+import br.rafaeros.aura.modules.device.model.UserDevice;
 import br.rafaeros.aura.modules.device.repository.DevicePositionRepository;
 import br.rafaeros.aura.modules.device.repository.DeviceRepository;
 import br.rafaeros.aura.modules.device.repository.DeviceTagRepository;
+import br.rafaeros.aura.modules.device.repository.UserDeviceRepository;
+import br.rafaeros.aura.modules.telemetry.model.DeviceTelemetry;
+import br.rafaeros.aura.modules.telemetry.repository.DeviceTelemetryRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
@@ -35,43 +42,52 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DeviceService {
 
+    private final EverynetClient everynetClient;
+
     private final DeviceRepository deviceRepository;
     private final UserRepository userRepository;
-    private final EverynetClient everynetClient;
     private final DevicePositionRepository positionRepository;
+    private final DeviceTelemetryRepository deviceTelemetryRepository;
 
+    @Autowired
+    private UserDeviceRepository userDeviceRepository;
     @Autowired
     private DeviceTagRepository tagRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     public DeviceService(
+            EverynetClient everynetClient,
             DeviceRepository deviceRepository,
             UserRepository userRepository,
-            EverynetClient everynetClient,
-            DevicePositionRepository positionRepository) {
+            DevicePositionRepository positionRepository,
+            DeviceTelemetryRepository deviceTelemetryRepository) {
         this.deviceRepository = deviceRepository;
         this.userRepository = userRepository;
         this.everynetClient = everynetClient;
         this.positionRepository = positionRepository;
+        this.deviceTelemetryRepository = deviceTelemetryRepository;
     }
 
     @Transactional(readOnly = true)
-    public List<Device> listDevicesSmart(String email) {
+    public Page<DeviceListResponseDTO> listDevicesSmart(String email, Pageable pageable) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        Pageable safePageable = Objects.requireNonNull(pageable);
+
         if (user.getRole() == Role.ADMIN) {
-            log.info("Admin {} is listing ALL devices in the system.", email);
-            return deviceRepository.findAll();
+            return deviceRepository.findAll(safePageable)
+                    .map(DeviceListResponseDTO::fromDevice);
+
         } else {
-            log.info("User/Owner {} is listing their OWN devices.", email);
-            return user.getDevices();
+            return userDeviceRepository.findAllByUserEmail(email, pageable)
+                    .map(DeviceListResponseDTO::fromUserDevice);
         }
     }
 
     @Transactional(readOnly = true)
-    public Device findById(Long id, String email) {
+    public DeviceDetailsResponseDTO findById(Long id, String email) {
         if (id == null)
             throw new BusinessException("Device ID is required.");
 
@@ -82,24 +98,24 @@ public class DeviceService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         boolean isAdmin = user.getRole() == Role.ADMIN;
-        boolean isOwnerOfDevice = user.getDevices().contains(device);
+        Optional<UserDevice> linkOpt = userDeviceRepository.findByUserEmailAndDeviceId(email, id);
 
-        if (!isAdmin && !isOwnerOfDevice) {
+        if (!isAdmin && linkOpt.isEmpty()) {
             throw new AccessDeniedException("Access denied: You do not have permission to view this device.");
         }
+        String customName = linkOpt.map(UserDevice::getCustomName).orElse(null);
+        List<DeviceTelemetry> recentLogs = deviceTelemetryRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
+        List<DevicePosition> recentPositions = positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
 
-        Hibernate.initialize(device.getTags());
-        Hibernate.initialize(device.getFeatures());
-        entityManager.detach(device);
+        DeviceDetailsResponseDTO deviceResponse = DeviceDetailsResponseDTO.fromEntity(customName, device,
+                recentPositions,
+                recentLogs);
 
-        List<DevicePosition> last5Positions = positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
-        device.setPositions(last5Positions);
-
-        return device;
+        return deviceResponse;
     }
 
     @Transactional
-    public Device createDevice(DeviceCreateDTO dto, String email) {
+    public Device createDevice(DeviceCreateRequestDTO dto, String email) {
         User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -113,12 +129,12 @@ public class DeviceService {
             device = fetchAndCreateFromEverynet(dto, apiToken);
         }
 
-        if (currentUser.getDevices().contains(device)) {
+        if (userDeviceRepository.existsByUserEmailAndDeviceId(email, device.getId())) {
             throw new BusinessException("Device " + dto.devEui() + " is already linked to your account.");
         }
 
-        currentUser.getDevices().add(device);
-        userRepository.save(currentUser);
+        device.addUser(currentUser, dto.name());
+        deviceRepository.save(device);
         log.info("Device {} linked to user {}", dto.devEui(), email);
 
         return device;
@@ -129,26 +145,11 @@ public class DeviceService {
         if (deviceId == null)
             throw new BusinessException("Device ID is required.");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserDevice link = userDeviceRepository.findByUserEmailAndDeviceId(email, deviceId)
+                .orElseThrow(() -> new BusinessException("This device is not linked to your account."));
 
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found with ID: " + deviceId));
-
-        boolean isAdmin = user.getRole() == Role.ADMIN;
-        boolean isOwnerOfDevice = user.getDevices().contains(device);
-
-        if (!isOwnerOfDevice && !isAdmin) {
-            throw new AccessDeniedException("You do not have permission to unlink this device.");
-        }
-
-        if (user.getDevices().contains(device)) {
-            user.getDevices().remove(device);
-            userRepository.save(user);
-            log.info("Device {} unlinked from user {}", deviceId, email);
-        } else {
-            throw new BusinessException("This device is not linked to your account.");
-        }
+        userDeviceRepository.delete(Objects.requireNonNull(link));
+        log.info("Device {} unlinked from user {}", deviceId, email);
     }
 
     private String extractCompanyApiToken(User user) {
@@ -161,23 +162,24 @@ public class DeviceService {
                 || settings.getEverynetAccessToken().isEmpty()) {
             throw new BusinessException("Company settings (Everynet Integration) are not configured properly.");
         }
-        ;
 
         return settings.getEverynetAccessToken();
     }
 
-    private Device fetchAndCreateFromEverynet(DeviceCreateDTO dto, String apiToken) {
+    private Device fetchAndCreateFromEverynet(DeviceCreateRequestDTO dto, String apiToken) {
         try {
             EverynetDevice externalData = everynetClient.getDeviceByDevEui(dto.devEui(), apiToken);
             if (externalData == null)
                 throw new ResourceNotFoundException("Device not found in Everynet: " + dto.devEui());
 
-            Device newDevice = Device.createFromEverynet(externalData, dto.name());
+            Device newDevice = Device.createFromEverynet(externalData);
             if (newDevice == null)
                 throw new IntegrationException("Failed to map Device entity.");
 
             processTagsAndPosition(newDevice, externalData);
+
             return deviceRepository.save(newDevice);
+
         } catch (Exception ex) {
             log.error("Everynet integration error", ex);
             if (ex instanceof ResourceNotFoundException || ex instanceof IntegrationException)
@@ -198,7 +200,6 @@ public class DeviceService {
             DevicePosition pos = new DevicePosition();
             pos.setLatitude(externalData.getGeolocation().getLat());
             pos.setLongitude(externalData.getGeolocation().getLng());
-            pos.setCreatedAt(OffsetDateTime.now());
             device.addPosition(pos);
         }
     }

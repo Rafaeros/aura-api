@@ -1,9 +1,8 @@
 package br.rafaeros.aura.modules.company.model;
 
-import java.time.OffsetDateTime;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.core.security.CryptoConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -13,13 +12,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "company_settings")
-public class CompanySettings {
+public class CompanySettings extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,98 +48,12 @@ public class CompanySettings {
     @Convert(converter = CryptoConverter.class)
     private String mqttPassword;
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    @Column(name="subscribe_topic")
+    private String subscribeTopic;
+
+    @Column(name="publish_topic")
+    private String publishTopic;
 
     public CompanySettings() {
-    }
-
-    public CompanySettings(
-            Long id,
-            Company company,
-            String everynetAccessToken,
-            String mqttHost,
-            Integer mqttPort,
-            String mqttUsername,
-            String mqttPassword,
-            OffsetDateTime updatedAt) {
-        this.id = id;
-        this.company = company;
-        this.everynetAccessToken = everynetAccessToken;
-        this.mqttHost = mqttHost;
-        this.mqttPort = mqttPort;
-        this.mqttUsername = mqttUsername;
-        this.mqttPassword = mqttPassword;
-        this.updatedAt = updatedAt;
-    }
-
-    @PrePersist
-    @PreUpdate
-    private void onUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Company getCompany() {
-        return company;
-    }
-
-    public void setCompany(Company company) {
-        this.company = company;
-    }
-
-    public String getEverynetAccessToken() {
-        return everynetAccessToken;
-    }
-
-    public void setEverynetAccessToken(String everynetAccessToken) {
-        this.everynetAccessToken = everynetAccessToken;
-    }
-
-    public String getMqttHost() {
-        return mqttHost;
-    }
-
-    public void setMqttHost(String mqttHost) {
-        this.mqttHost = mqttHost;
-    }
-
-    public Integer getMqttPort() {
-        return mqttPort;
-    }
-
-    public void setMqttPort(Integer mqttPort) {
-        this.mqttPort = mqttPort;
-    }
-
-    public String getMqttUsername() {
-        return mqttUsername;
-    }
-
-    public void setMqttUsername(String mqttUsername) {
-        this.mqttUsername = mqttUsername;
-    }
-
-    public String getMqttPassword() {
-        return mqttPassword;
-    }
-
-    public void setMqttPassword(String mqttPassword) {
-        this.mqttPassword = mqttPassword;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

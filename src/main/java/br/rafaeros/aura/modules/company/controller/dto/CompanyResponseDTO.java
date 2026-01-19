@@ -7,6 +7,7 @@ public record CompanyResponseDTO(
         String name,
         String cnpj,
         String cep,
+        Integer addressNumber,
         CompanySettingsResponseDTO settings) {
 
     public static CompanyResponseDTO fromEntity(Company company) {
@@ -15,6 +16,7 @@ public record CompanyResponseDTO(
                 company.getName(),
                 company.getCnpj(),
                 company.getCep(),
+                company.getAddressNumber(),
                 company.getSettings() != null ? CompanySettingsResponseDTO.fromEntity(company.getSettings()) : null);
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,7 +37,7 @@ public class CompanySettingsController {
         return ResponseEntity.ok(settings);
     }
 
-    @PostMapping("/current/settings")
+    @PutMapping("/current/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<CompanySettingsResponseDTO> updateMySettings(
             @Valid @RequestBody CompanySettingsRequestDTO dto, Authentication auth) {
@@ -59,7 +59,7 @@ public class CompanySettingsController {
         return ResponseEntity.ok(service.findByCompanyId(companyId));
     }
 
-    @PostMapping("/{companyId}/settings")
+    @PutMapping("/{companyId}/settings")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CompanySettingsResponseDTO> updateSettings(
             @PathVariable Long companyId,

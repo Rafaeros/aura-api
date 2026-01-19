@@ -1,6 +1,7 @@
 package br.rafaeros.aura.modules.company.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import br.rafaeros.aura.modules.company.model.CompanySettings;
 
 // ADICIONE 'public' AQUI
@@ -15,7 +16,11 @@ public record CompanySettingsResponseDTO(
 
         @JsonProperty("mqtt_username") String mqttUsername,
 
-        @JsonProperty("mqtt_password") String mqttPassword) {
+        @JsonProperty("mqtt_password") String mqttPassword,
+
+        @JsonProperty("subscribe_topic") String subscribeTopic,
+
+        @JsonProperty("publish_topic") String publishTopic) {
 
     public static CompanySettingsResponseDTO fromEntity(CompanySettings settings) {
         return new CompanySettingsResponseDTO(
@@ -24,7 +29,9 @@ public record CompanySettingsResponseDTO(
                 settings.getMqttHost(),
                 settings.getMqttPort(),
                 settings.getMqttUsername(),
-                settings.getMqttPassword());
+                settings.getMqttPassword(),
+                settings.getSubscribeTopic(),
+                settings.getPublishTopic());
     }
 
     public CompanySettingsResponseDTO maskSecrets() {
@@ -34,7 +41,8 @@ public record CompanySettingsResponseDTO(
                 this.mqttHost(),
                 this.mqttPort(),
                 this.mqttUsername(),
-                null 
-        );
+                null,
+                this.subscribeTopic(),
+                this.publishTopic());
     }
 }

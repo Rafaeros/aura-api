@@ -23,5 +23,13 @@ public record CompanySettingsRequestDTO(
 
         @NotBlank(message = "MQTT Password is required")
         @JsonProperty("mqtt_password")
-        String mqttPassword
+        String mqttPassword,
+
+        @NotBlank(message= "MQTT subscribe topic is required")
+        @JsonProperty("subscribe_topic")
+        String subscribeTopic,
+
+        @NotBlank(message = "MQTT publish topic is required")
+        @JsonProperty("publish_topic")
+        String publishTopic
 ) {}
