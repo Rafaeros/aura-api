@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
+import br.rafaeros.aura.modules.device.repository.UserDeviceRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
@@ -14,6 +15,9 @@ public class UserSecurity {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserDeviceRepository userDeviceRepository;
 
     public boolean isOwnerOfCompany(Authentication authentication, Long targetCompanyId) {
         User user = getUser(authentication);
@@ -42,9 +46,7 @@ public class UserSecurity {
         User user = getUser(authentication);
         if (user.getRole() == Role.ADMIN)
             return true;
-
-        return user.getDevices().stream()
-                .anyMatch(device -> device.getId().equals(deviceId));
+        return userDeviceRepository.existsByUserEmailAndDeviceId(authentication.getName(), deviceId);
     }
 
     private User getUser(Authentication authentication) {
