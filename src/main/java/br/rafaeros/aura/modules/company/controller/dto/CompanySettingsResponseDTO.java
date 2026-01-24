@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import br.rafaeros.aura.modules.company.model.CompanySettings;
 
-// ADICIONE 'public' AQUI
 public record CompanySettingsResponseDTO(
         Long id,
 
