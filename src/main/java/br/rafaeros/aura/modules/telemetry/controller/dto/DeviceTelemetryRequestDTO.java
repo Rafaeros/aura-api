@@ -16,7 +16,5 @@ public record DeviceTelemetryRequestDTO(
     @NotBlank(message = "Type is required")
     String type,
 
-    Object payload, 
-    
-    Object metadata
+    Object payload
 ) {}
