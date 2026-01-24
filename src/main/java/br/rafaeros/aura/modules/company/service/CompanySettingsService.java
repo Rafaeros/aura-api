@@ -8,6 +8,7 @@ import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsRequestDTO;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
+import br.rafaeros.aura.modules.company.controller.dto.MqttConfigResponseDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.model.CompanySettings;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
@@ -42,6 +43,18 @@ public class CompanySettingsService {
         }
 
         return findByCompanyId(user.getCompany().getId());
+    }
+
+    @Transactional(readOnly = true)
+    public MqttConfigResponseDTO findMyMqttSettings(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCompany() == null) {
+            throw new BusinessException("User is not associated with a company.");
+        }
+
+        return MqttConfigResponseDTO.fromCompanySettingsEntity(user.getCompany().getSettings());
     }
 
     @Transactional
