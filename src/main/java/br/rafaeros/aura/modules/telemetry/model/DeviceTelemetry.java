@@ -1,18 +1,13 @@
 package br.rafaeros.aura.modules.telemetry.model;
 
+import org.hibernate.annotations.JdbcTypeCode; // Importante!
+import org.hibernate.type.SqlTypes; // Importante!
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.modules.device.model.Device;
 import br.rafaeros.aura.modules.telemetry.model.enums.TelemetrySource;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,13 +28,12 @@ public class DeviceTelemetry extends BaseEntity {
     @Column(nullable = false)
     private String type;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String payload;
 
-    @Column(columnDefinition = "jsonb")
-    private String metadata;
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "device_id")
+    @JsonIgnore
     private Device device;
 }
