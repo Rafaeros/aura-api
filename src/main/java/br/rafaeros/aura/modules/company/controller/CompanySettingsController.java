@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsRequestDTO;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
+import br.rafaeros.aura.modules.company.controller.dto.MqttConfigResponseDTO;
 import br.rafaeros.aura.modules.company.service.CompanySettingsService;
 import br.rafaeros.aura.modules.user.service.UserService;
 import jakarta.validation.Valid;
@@ -34,6 +35,13 @@ public class CompanySettingsController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<CompanySettingsResponseDTO> getMySettings(Authentication auth) {
         CompanySettingsResponseDTO settings = service.findMyCompanySettings(auth.getName());
+        return ResponseEntity.ok(settings);
+    }
+
+    @GetMapping("/current/settings/mqtt")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    public ResponseEntity<MqttConfigResponseDTO> getMyMqttSettings(Authentication auth) {
+        MqttConfigResponseDTO settings = service.findMyMqttSettings(auth.getName());
         return ResponseEntity.ok(settings);
     }
 
