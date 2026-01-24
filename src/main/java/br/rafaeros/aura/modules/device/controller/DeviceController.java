@@ -21,21 +21,17 @@ import br.rafaeros.aura.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.aura.modules.device.controller.dto.DeviceListResponseDTO;
 import br.rafaeros.aura.modules.device.model.Device;
 import br.rafaeros.aura.modules.device.service.DeviceService;
-import br.rafaeros.aura.modules.telemetry.controller.dto.DeviceTelemetryResponseDTO;
-import br.rafaeros.aura.modules.telemetry.service.DeviceTelemetryService;
 import jakarta.validation.Valid;
-
+    
 @RestController
 @RequestMapping("/devices")
 @CrossOrigin(origins = "*")
 public class DeviceController {
 
     private final DeviceService deviceService;
-    private final DeviceTelemetryService telemetryService;
 
-    public DeviceController(DeviceService deviceService, DeviceTelemetryService telemetryService) {
+    public DeviceController(DeviceService deviceService) {
         this.deviceService = deviceService;
-        this.telemetryService = telemetryService;
     }
 
     @PostMapping
@@ -62,18 +58,24 @@ public class DeviceController {
         return ResponseEntity.ok(device);
     }
 
+    @GetMapping("/dev-eui/{dev_eui}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DeviceDetailsResponseDTO> getByDevEui(@PathVariable("dev_eui") String devEui,
+            Authentication authentication) {
+        DeviceDetailsResponseDTO device = deviceService.findByDevEui(devEui, authentication.getName());
+        return ResponseEntity.ok(device);
+    }
+
+    @GetMapping("/exists/{dev_eui}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> existsByDevEui(@PathVariable("dev_eui") String deveui) {
+        return ResponseEntity.ok(deviceService.existsByDevEui(deveui));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
         deviceService.unlinkDevice(id, authentication.getName());
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/{id}/telemetry")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<DeviceTelemetryResponseDTO>> getDeviceTelemetryHistory(
-            @PathVariable Long id,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(telemetryService.listHistory(id, pageable));
     }
 }
