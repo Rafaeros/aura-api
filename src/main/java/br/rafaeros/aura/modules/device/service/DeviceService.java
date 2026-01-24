@@ -29,8 +29,8 @@ import br.rafaeros.aura.modules.device.repository.DevicePositionRepository;
 import br.rafaeros.aura.modules.device.repository.DeviceRepository;
 import br.rafaeros.aura.modules.device.repository.DeviceTagRepository;
 import br.rafaeros.aura.modules.device.repository.UserDeviceRepository;
-import br.rafaeros.aura.modules.telemetry.model.DeviceTelemetry;
-import br.rafaeros.aura.modules.telemetry.repository.DeviceTelemetryRepository;
+import br.rafaeros.aura.modules.telemetry.controller.dto.DeviceTelemetryResponseDTO;
+import br.rafaeros.aura.modules.telemetry.service.DeviceTelemetryService;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
@@ -47,7 +47,7 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
     private final UserRepository userRepository;
     private final DevicePositionRepository positionRepository;
-    private final DeviceTelemetryRepository deviceTelemetryRepository;
+    private final DeviceTelemetryService deviceTelemetryService;
 
     @Autowired
     private UserDeviceRepository userDeviceRepository;
@@ -61,12 +61,12 @@ public class DeviceService {
             DeviceRepository deviceRepository,
             UserRepository userRepository,
             DevicePositionRepository positionRepository,
-            DeviceTelemetryRepository deviceTelemetryRepository) {
+            DeviceTelemetryService deviceTelemetryService) {
         this.deviceRepository = deviceRepository;
         this.userRepository = userRepository;
         this.everynetClient = everynetClient;
         this.positionRepository = positionRepository;
-        this.deviceTelemetryRepository = deviceTelemetryRepository;
+        this.deviceTelemetryService = deviceTelemetryService;
     }
 
     @Transactional(readOnly = true)
@@ -104,14 +104,24 @@ public class DeviceService {
             throw new AccessDeniedException("Access denied: You do not have permission to view this device.");
         }
         String customName = linkOpt.map(UserDevice::getCustomName).orElse(null);
-        List<DeviceTelemetry> recentLogs = deviceTelemetryRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
         List<DevicePosition> recentPositions = positionRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(id);
+        List<DeviceTelemetryResponseDTO> recentLogs = deviceTelemetryService.findTop5ByDeviceId(id);
 
         DeviceDetailsResponseDTO deviceResponse = DeviceDetailsResponseDTO.fromEntity(customName, device,
                 recentPositions,
                 recentLogs);
 
         return deviceResponse;
+    }
+
+    public DeviceDetailsResponseDTO findByDevEui(String devEui, String email) {
+        Device device = deviceRepository.findByDevEui(devEui)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found with DevEui: " + devEui));
+        return DeviceDetailsResponseDTO.fromEntity(null, device, null, null);
+    }
+
+    public boolean existsByDevEui(String devEui) {
+        return deviceRepository.existsByDevEui(devEui);
     }
 
     @Transactional
