@@ -10,7 +10,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DeviceRepository extends JpaRepository<Device, Long> {
-    @Query("SELECT d FROM Device d JOIN d.users u WHERE u.username = :username")
+
+    @Query("SELECT d FROM Device d JOIN d.usersLink ud WHERE ud.user.username = :username")
     List<Device> findAllByUsername(@Param("username") String username);
 
     boolean existsByDevEui(String devEui);
