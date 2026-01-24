@@ -11,5 +11,5 @@ import br.rafaeros.aura.modules.telemetry.model.DeviceTelemetry;
 public interface DeviceTelemetryRepository extends JpaRepository<DeviceTelemetry, Long> {
     List<DeviceTelemetry> findTop5ByDeviceIdOrderByCreatedAtDesc(Long deviceId);
 
-    Page<DeviceTelemetry> findByDeviceId(Long deviceId, Pageable pageable);
+    Page<DeviceTelemetry> findByDeviceIdOrderByCreatedAtDesc(Long deviceId, Pageable pageable);
 }
