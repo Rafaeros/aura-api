@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.core.security.CryptoConverter;
-import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,10 +13,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "company_settings")
 public class CompanySettings extends BaseEntity {
@@ -31,29 +32,19 @@ public class CompanySettings extends BaseEntity {
     @JsonIgnore
     private Company company;
 
-    @Column(name = "everynet_access_token")
     @Convert(converter = CryptoConverter.class)
     private String everynetAccessToken;
 
-    @Column(name = "mqtt_host")
     private String mqttHost;
 
-    @Column(name = "mqtt_port")
     private Integer mqttPort;
 
-    @Column(name = "mqtt_username")
     private String mqttUsername;
 
-    @Column(name = "mqtt_password")
     @Convert(converter = CryptoConverter.class)
     private String mqttPassword;
 
-    @Column(name="subscribe_topic")
     private String subscribeTopic;
 
-    @Column(name="publish_topic")
     private String publishTopic;
-
-    public CompanySettings() {
-    }
 }

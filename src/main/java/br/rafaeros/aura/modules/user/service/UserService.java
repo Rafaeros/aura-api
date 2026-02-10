@@ -6,6 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,30 +19,27 @@ import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
 import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
-import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
 import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserResponseDTO;
 import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
-public class UserService {
+@RequiredArgsConstructor
+public class UserService implements UserDetailsService {
 
     private final UserRepository repository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String DEFAULT_PASSWORD = "mudar@123";
 
-    public UserService(
-            UserRepository repository,
-            CompanyRepository companyRepository,
-            CompanySettingsRepository companySettingsRepository,
-            PasswordEncoder passwordEncoder) {
-        this.repository = repository;
-        this.companyRepository = companyRepository;
-        this.passwordEncoder = passwordEncoder;
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 
     @Transactional

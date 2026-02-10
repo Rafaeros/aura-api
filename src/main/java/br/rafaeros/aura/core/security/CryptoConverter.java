@@ -22,7 +22,7 @@ public class CryptoConverter implements AttributeConverter<String, String> {
     public CryptoConverter(@Value("${app.security.db-secret-key}") String secret) {
         if (secret == null || secret.isEmpty()) {
             throw new IllegalStateException(
-                    "Database encryption key is not configured properly.");
+                    "A chave de criptografia do banco de dados não está configurada corretamente.");
         }
 
         byte[] keyBytes = new byte[16];
@@ -42,7 +42,7 @@ public class CryptoConverter implements AttributeConverter<String, String> {
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return Base64.getEncoder().encodeToString(cipher.doFinal(attribute.getBytes()));
         } catch (Exception e) {
-            throw new RuntimeException("Error encrypting data. Check if the key changed.", e);
+            throw new RuntimeException("Erro ao criptografar os dados. Verifique se a chave foi alterada.", e);
         }
     }
 
@@ -56,7 +56,7 @@ public class CryptoConverter implements AttributeConverter<String, String> {
             cipher.init(Cipher.DECRYPT_MODE, key);
             return new String(cipher.doFinal(Base64.getDecoder().decode(dbData)));
         } catch (Exception e) {
-            throw new RuntimeException("Error decrypting data. Check if the key changed.", e);
+            throw new RuntimeException("Erro ao descriptografar os dados. Verifique se a chave foi alterada.", e);
         }
     }
 }

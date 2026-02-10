@@ -35,10 +35,10 @@ public class AdminUserSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
         if (userRepository.findByEmail(adminConfig.getEmail()).isPresent()) {
-            System.out.println("Seeder: Admin user already exists. Skipping.");
+            System.out.println("Seeder: Admin já cadastrado. pulando criação...");
             return;
         }
-        System.out.println("Seeder: Creating default Admin and Company...");
+        System.out.println("Seeder: Criando usuário admin e empresa padrão...");
 
         Company company = companyRepository.findByCnpj(adminConfig.getCompany().getCnpj())
                 .orElseGet(() -> {
@@ -54,6 +54,8 @@ public class AdminUserSeeder implements CommandLineRunner {
                     return companyRepository.save(newCompany);
                 });
         User admin = new User();
+        admin.setName(adminConfig.getName());
+        admin.setLastName(adminConfig.getLastName());
         admin.setUsername(adminConfig.getUsername());
         admin.setEmail(adminConfig.getEmail());
         admin.setPassword(passwordEncoder.encode(adminConfig.getPassword()));
@@ -62,6 +64,6 @@ public class AdminUserSeeder implements CommandLineRunner {
 
         userRepository.save(admin);
 
-        System.out.println("Seeder: Admin user created successfully: " + adminConfig.getEmail());
+        System.out.println("Seeder: Usuário admin criado com sucesso: " + adminConfig.getEmail());
     }
 }

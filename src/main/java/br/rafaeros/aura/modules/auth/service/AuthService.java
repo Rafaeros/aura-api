@@ -1,8 +1,8 @@
 package br.rafaeros.aura.modules.auth.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,30 +18,31 @@ import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JwtService jwtService;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private CompanySettingsRepository companySettingsRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final CompanySettingsRepository companySettingsRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public AuthResponseDTO activateAccount(FirstAccessRequestDTO request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public AuthResponseDTO activateAccount(User user, FirstAccessRequestDTO request) {
+        if (user == null) {
+            throw new BusinessException("Usuário não identificado. Envie o token de acesso.");
+        }
 
+        validateUserStatus(user);
         validateActivation(user, request);
 
         user.setFirstAccess(false);
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setActive(true);
+
         userRepository.save(user);
 
         String token = jwtService.generateToken(user);
@@ -51,15 +52,19 @@ public class AuthService {
     }
 
     public AuthResponseDTO login(AuthRequestDTO request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        } catch (DisabledException e) {
+            throw new BusinessException("Sua conta ou empresa estão desativadas. Contate o suporte.");
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("E-mail ou senha inválidos.");
+        }
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
-        if (!validateUserPassword(user, request.password())) {
-            throw new BadCredentialsException("Invalid password.");
-        }
+        validateUserStatus(user);
 
         String token = jwtService.generateToken(user);
         boolean isSettingsConfigured = checkSettingsConfigured(user);
@@ -67,35 +72,37 @@ public class AuthService {
         return new AuthResponseDTO(token, isSettingsConfigured, user.isFirstAccess());
     }
 
-    private boolean validateUserPassword(User user, String rawPassword) {
-        return passwordEncoder.matches(rawPassword, user.getPassword());
+    private void validateUserStatus(User user) {
+        if (!user.isActive()) {
+            throw new BusinessException("Usuário inativo. Contate o administrador.");
+        }
+        if (user.getCompany() != null && !user.getCompany().isActive()) {
+            throw new BusinessException("O acesso da sua empresa está suspenso.");
+        }
     }
 
     private boolean checkSettingsConfigured(User user) {
-        if (user.getRole() == Role.OWNER) {
-            if (user.getCompany() != null) {
-                return companySettingsRepository.existsByCompanyId(user.getCompany().getId());
-            }
-            return false;
+        if (user.getRole() == Role.OWNER && user.getCompany() != null) {
+            return companySettingsRepository.existsByCompanyId(user.getCompany().getId());
         }
         return true;
     }
 
     private void validateActivation(User user, FirstAccessRequestDTO request) {
         if (!user.isFirstAccess()) {
-            throw new BusinessException("This account is already activated.");
+            throw new BusinessException("Esta conta já foi ativada.");
         }
 
         if (!passwordEncoder.matches(request.tempPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Invalid temporary password.");
+            throw new BadCredentialsException("A senha temporária está incorreta.");
         }
 
         if (!request.newPassword().equals(request.confirmNewPassword())) {
-            throw new IllegalArgumentException("The new password and confirmation password do not match.");
+            throw new BusinessException("A nova senha e a confirmação não coincidem.");
         }
 
-        if (request.newPassword().equals(request.tempPassword())) {
-            throw new IllegalArgumentException("The new password cannot be the same as the temporary password.");
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new BusinessException("A nova senha não pode ser igual à senha temporária.");
         }
     }
 }

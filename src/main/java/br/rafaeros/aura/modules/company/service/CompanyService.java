@@ -110,7 +110,7 @@ public class CompanyService {
     @Transactional
     public void toggleActive(Long id) {
         Company company = findByIdInternal(id);
-        company.setIsActive(!company.getIsActive());
+        company.setActive(!company.isActive());
         companyRepository.save(Objects.requireNonNull(company));
     }
 

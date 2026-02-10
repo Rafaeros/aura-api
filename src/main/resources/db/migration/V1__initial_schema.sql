@@ -1,108 +1,106 @@
-CREATE TABLE
-    company (
-        id BIGSERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        cnpj VARCHAR(14) NOT NULL UNIQUE,
-        cep VARCHAR(8),
-        address_number INTEGER,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP
-    );
+CREATE TABLE company (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    cnpj VARCHAR(14) NOT NULL UNIQUE,
+    cep VARCHAR(8),
+    address_number INTEGER,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP
+);
 
-CREATE TABLE
-    company_settings (
-        id BIGSERIAL PRIMARY KEY,
-        company_id BIGINT NOT NULL UNIQUE,
-        everynet_access_token TEXT,
-        mqtt_host VARCHAR(255),
-        mqtt_port INTEGER,
-        mqtt_username VARCHAR(255),
-        mqtt_password TEXT,
-        subscribe_topic VARCHAR(255),
-        publish_topic VARCHAR(255),
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
-        CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id) REFERENCES company (id)
-    );
+CREATE TABLE company_settings (
+    id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT NOT NULL UNIQUE,
+    everynet_access_token TEXT,
+    mqtt_host VARCHAR(255),
+    mqtt_port INTEGER,
+    mqtt_username VARCHAR(255),
+    mqtt_password TEXT,
+    subscribe_topic VARCHAR(255),
+    publish_topic VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id) REFERENCES company (id)
+);
 
-CREATE TABLE
-    users (
-        id BIGSERIAL PRIMARY KEY,
-        company_id BIGINT NOT NULL,
-        username VARCHAR(255) NOT NULL UNIQUE,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(50) NOT NULL,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        is_first_access BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
-        CONSTRAINT fk_users_company FOREIGN KEY (company_id) REFERENCES company (id)
-    );
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    company_id BIGINT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_first_access BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_users_company FOREIGN KEY (company_id) REFERENCES company (id)
+);
 
-CREATE TABLE
-    device (
-        id BIGSERIAL PRIMARY KEY,
-        dev_eui VARCHAR(255) NOT NULL UNIQUE,
-        dev_addr VARCHAR(255) NOT NULL,
-        app_eui VARCHAR(255) NOT NULL,
-        nwks_key VARCHAR(255) NOT NULL,
-        apps_key VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP
-    );
+CREATE TABLE device (
+    id BIGSERIAL PRIMARY KEY,
+    dev_eui VARCHAR(255) NOT NULL UNIQUE,
+    dev_addr VARCHAR(255) NOT NULL,
+    app_eui VARCHAR(255) NOT NULL,
+    nwks_key VARCHAR(255) NOT NULL,
+    apps_key VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP
+);
 
-CREATE TABLE
-    tags (
-        id BIGSERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+CREATE TABLE tags (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP
+);
 
-CREATE TABLE
-    device_tags (
-        device_id BIGINT NOT NULL,
-        tag_id BIGINT NOT NULL,
-        CONSTRAINT fk_device_tags_device FOREIGN KEY (device_id) REFERENCES device (id),
-        CONSTRAINT fk_device_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id)
-    );
+CREATE TABLE device_tags (
+    device_id BIGINT NOT NULL,
+    tag_id BIGINT NOT NULL,
+    CONSTRAINT fk_device_tags_device FOREIGN KEY (device_id) REFERENCES device (id),
+    CONSTRAINT fk_device_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id)
+);
 
-CREATE TABLE
-    user_device (
-        user_id BIGINT NOT NULL,
-        device_id BIGINT NOT NULL,
-        custom_name VARCHAR(255),
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
-        PRIMARY KEY (user_id, device_id),
-        CONSTRAINT fk_user_device_user FOREIGN KEY (user_id) REFERENCES users (id),
-        CONSTRAINT fk_user_device_device FOREIGN KEY (device_id) REFERENCES device (id)
-    );
+CREATE TABLE user_device (
+    user_id BIGINT NOT NULL,
+    device_id BIGINT NOT NULL,
+    custom_name VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    PRIMARY KEY (user_id, device_id),
+    CONSTRAINT fk_user_device_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_user_device_device FOREIGN KEY (device_id) REFERENCES device (id)
+);
 
-CREATE TABLE
-    device_feature (
-        id BIGSERIAL PRIMARY KEY,
-        device_id BIGINT NOT NULL,
-        name VARCHAR(255),
-        value VARCHAR(255),
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
-        CONSTRAINT fk_device_feature_device FOREIGN KEY (device_id) REFERENCES device (id)
-    );
+CREATE TABLE device_feature (
+    id BIGSERIAL PRIMARY KEY,
+    device_id BIGINT NOT NULL,
+    name VARCHAR(255),
+    value VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_device_feature_device FOREIGN KEY (device_id) REFERENCES device (id)
+);
 
-CREATE TABLE
-    device_position (
-        id BIGSERIAL PRIMARY KEY,
-        device_id BIGINT NOT NULL,
-        latitude DOUBLE PRECISION NOT NULL,
-        longitude DOUBLE PRECISION NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
-        CONSTRAINT fk_device_position_device FOREIGN KEY (device_id) REFERENCES device (id)
-    );
-
+CREATE TABLE device_position (
+    id BIGSERIAL PRIMARY KEY,
+    device_id BIGINT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_device_position_device FOREIGN KEY (device_id) REFERENCES device (id)
+);
 
 CREATE TABLE device_telemetry (
     id BIGSERIAL PRIMARY KEY,
@@ -110,7 +108,8 @@ CREATE TABLE device_telemetry (
     source VARCHAR(50) NOT NULL,
     type VARCHAR(50),
     payload JSONB,
-    created_at TIMESTAMP NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
     CONSTRAINT fk_telemetry_device FOREIGN KEY (device_id) REFERENCES device(id)
 );
