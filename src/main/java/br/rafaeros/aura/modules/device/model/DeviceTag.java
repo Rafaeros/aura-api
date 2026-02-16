@@ -14,26 +14,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "tags")
+@NoArgsConstructor
 public class DeviceTag extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @ManyToMany(mappedBy = "tags")
     @JsonIgnore
     private List<Device> devices = new ArrayList<>();
-
-    public DeviceTag() {
-    }
 
     public DeviceTag(String name) {
         this.name = name;

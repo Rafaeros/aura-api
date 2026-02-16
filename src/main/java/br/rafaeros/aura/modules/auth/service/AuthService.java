@@ -11,10 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.core.security.JwtService;
-import br.rafaeros.aura.modules.auth.controller.dto.AuthRequestDTO;
-import br.rafaeros.aura.modules.auth.controller.dto.AuthResponseDTO;
-import br.rafaeros.aura.modules.auth.controller.dto.FirstAccessRequestDTO;
-import br.rafaeros.aura.modules.company.repository.CompanySettingsRepository;
+import br.rafaeros.aura.modules.auth.controller.dto.AuthDTO;
+import br.rafaeros.aura.modules.companysettings.repository.CompanySettingsRepository;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.model.enums.Role;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
@@ -31,13 +29,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public AuthResponseDTO activateAccount(User user, FirstAccessRequestDTO request) {
+    public AuthDTO.Response activateAccount(AuthDTO.FirstAccessRequest request, User user) {
         if (user == null) {
             throw new BusinessException("Usuário não identificado. Envie o token de acesso.");
         }
 
         validateUserStatus(user);
-        validateActivation(user, request);
+        validateActivation(request, user);
 
         user.setFirstAccess(false);
         user.setPassword(passwordEncoder.encode(request.newPassword()));
@@ -48,10 +46,10 @@ public class AuthService {
         String token = jwtService.generateToken(user);
         boolean isSettingsConfigured = checkSettingsConfigured(user);
 
-        return new AuthResponseDTO(token, isSettingsConfigured, user.isFirstAccess());
+        return new AuthDTO.Response(token, isSettingsConfigured, user.isFirstAccess());
     }
 
-    public AuthResponseDTO login(AuthRequestDTO request) {
+    public AuthDTO.Response login(AuthDTO.Request request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password()));
@@ -69,7 +67,7 @@ public class AuthService {
         String token = jwtService.generateToken(user);
         boolean isSettingsConfigured = checkSettingsConfigured(user);
 
-        return new AuthResponseDTO(token, isSettingsConfigured, user.isFirstAccess());
+        return new AuthDTO.Response(token, isSettingsConfigured, user.isFirstAccess());
     }
 
     private void validateUserStatus(User user) {
@@ -88,7 +86,7 @@ public class AuthService {
         return true;
     }
 
-    private void validateActivation(User user, FirstAccessRequestDTO request) {
+    private void validateActivation(AuthDTO.FirstAccessRequest request, User user) {
         if (!user.isFirstAccess()) {
             throw new BusinessException("Esta conta já foi ativada.");
         }

@@ -6,7 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,60 +17,63 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.rafaeros.aura.modules.company.controller.dto.CompanyRequestDTO;
-import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
+import br.rafaeros.aura.core.dto.ApiResponse;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyDTO;
 import br.rafaeros.aura.modules.company.service.CompanyService;
+import br.rafaeros.aura.modules.user.model.User;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/companies")
+@RequiredArgsConstructor
 public class CompanyController {
 
     private final CompanyService companyService;
 
-    public CompanyController(CompanyService companyService) {
-        this.companyService = companyService;
-    }
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CompanyResponseDTO> create(@Valid @RequestBody CompanyRequestDTO request) {
-        CompanyResponseDTO saved = companyService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CompanyResponseDTO> getById(@PathVariable Long id, Authentication authentication) {
-        CompanyResponseDTO company = companyService.findById(id, authentication.getName());
-        return ResponseEntity.ok(company);
+    public ResponseEntity<ApiResponse<CompanyDTO.Response>> create(
+            @Valid @RequestBody CompanyDTO.CreateRequest request) {
+        CompanyDTO.Response company = companyService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Empresa criada com sucesso.", company));
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<CompanyResponseDTO>> getAll(@PageableDefault(page = 0, size = 10) Pageable pageable) {
-        return ResponseEntity.ok(companyService.findAll(pageable));
+    public ResponseEntity<ApiResponse<Page<CompanyDTO.Response>>> getAll(
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<CompanyDTO.Response> companies = companyService.findAll(pageable);
+        return ResponseEntity.ok(ApiResponse.success("Empresas listadas com sucesso.", companies));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("@companySecurity.canAccessCompany(#id, #user)")
+    public ResponseEntity<ApiResponse<CompanyDTO.Response>> getById(@PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        CompanyDTO.Response company = companyService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("Empresa listada com sucesso.", company));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CompanyResponseDTO> update(
-            @PathVariable Long id, @Valid @RequestBody CompanyRequestDTO request) {
-        CompanyResponseDTO updated = companyService.update(id, request);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<ApiResponse<CompanyDTO.Response>> update(
+            @PathVariable Long id, @Valid @RequestBody CompanyDTO.UpdateRequest request) {
+        CompanyDTO.Response updated = companyService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Empresa atualizada com sucesso.", updated));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> toggleActive(@PathVariable Long id) {
-        companyService.toggleActive(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse<Void>> toggleActive(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(companyService.toggleActive(id)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         companyService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Empresa deletada com sucesso."));
     }
 }

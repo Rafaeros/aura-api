@@ -6,8 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,66 +15,48 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.rafaeros.aura.modules.device.controller.dto.DeviceCreateRequestDTO;
-import br.rafaeros.aura.modules.device.controller.dto.DeviceDetailsResponseDTO;
-import br.rafaeros.aura.modules.device.controller.dto.DeviceListResponseDTO;
-import br.rafaeros.aura.modules.device.model.Device;
+import br.rafaeros.aura.core.dto.ApiResponse;
+import br.rafaeros.aura.modules.device.controller.dto.DeviceDTO;
 import br.rafaeros.aura.modules.device.service.DeviceService;
+import br.rafaeros.aura.modules.user.model.User;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
     
 @RestController
 @RequestMapping("/devices")
-@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class DeviceController {
 
     private final DeviceService deviceService;
 
-    public DeviceController(DeviceService deviceService) {
-        this.deviceService = deviceService;
-    }
-
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER', 'OWNER')")
-    public ResponseEntity<Device> create(
-            @RequestBody @Valid DeviceCreateRequestDTO dto, Authentication authentication) {
-
-        Device savedDevice = deviceService.createDevice(dto, authentication.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedDevice);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<DeviceDTO.Response>> create(
+            @RequestBody @Valid DeviceDTO.RegisterRequest request, @AuthenticationPrincipal User user) {
+        DeviceDTO.Response savedDevice = deviceService.createDevice(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Dispositivo registrado com sucesso.", savedDevice));
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<DeviceListResponseDTO>> getAll(
-            Authentication authentication,
+    public ResponseEntity<ApiResponse<Page<DeviceDTO.Response>>> getAll(
+            @AuthenticationPrincipal User user,
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        return ResponseEntity.ok(deviceService.listDevicesSmart(authentication.getName(), pageable));
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos listados com sucesso.", deviceService.findAllUserDevices(user, pageable)));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DeviceDetailsResponseDTO> getById(@PathVariable Long id, Authentication authentication) {
-        DeviceDetailsResponseDTO device = deviceService.findById(id, authentication.getName());
-        return ResponseEntity.ok(device);
+    @PreAuthorize("@deviceSecurity.canViewDevice(#id, #user)")
+    public ResponseEntity<ApiResponse<DeviceDTO.DetailsResponse>> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        DeviceDTO.DetailsResponse device = deviceService.findById(id, user);
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo encontrado com sucesso.", device));
     }
 
-    @GetMapping("/dev-eui/{dev_eui}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DeviceDetailsResponseDTO> getByDevEui(@PathVariable("dev_eui") String devEui,
-            Authentication authentication) {
-        DeviceDetailsResponseDTO device = deviceService.findByDevEui(devEui, authentication.getName());
-        return ResponseEntity.ok(device);
-    }
-
-    @GetMapping("/exists/{dev_eui}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Boolean> existsByDevEui(@PathVariable("dev_eui") String deveui) {
-        return ResponseEntity.ok(deviceService.existsByDevEui(deveui));
-    }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
-        deviceService.unlinkDevice(id, authentication.getName());
-        return ResponseEntity.noContent().build();
+    @PreAuthorize("@deviceSecurity.canUnlinkDevice(#id, #user)")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        deviceService.unlinkDevice(id, user);
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo desvinculado com sucesso."));
     }
 }

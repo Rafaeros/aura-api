@@ -1,21 +1,35 @@
 package br.rafaeros.aura.modules.user.model;
 
-import br.rafaeros.aura.core.model.BaseEntity;
-import br.rafaeros.aura.modules.company.model.Company;
-import br.rafaeros.aura.modules.device.model.UserDevice;
-import br.rafaeros.aura.modules.user.model.enums.Role;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import br.rafaeros.aura.core.model.BaseEntity;
+import br.rafaeros.aura.modules.company.model.Company;
+import br.rafaeros.aura.modules.device.model.UserDevice;
+import br.rafaeros.aura.modules.user.model.enums.Role;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
@@ -29,16 +43,16 @@ public class User extends BaseEntity implements UserDetails {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String firstName;
 
     @Column(nullable = false)
     private String lastName;
 
     @Column(nullable = false, unique = true)
-    private String username; // Este é o "apelido" do usuário
+    private String username;
 
     @Column(nullable = false, unique = true)
-    private String email; // Este é o LOGIN do usuário
+    private String email;
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -54,7 +68,7 @@ public class User extends BaseEntity implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserDevice> userDevices = new ArrayList<>();
-    
+
     private boolean isFirstAccess;
 
     @Override
@@ -67,20 +81,29 @@ public class User extends BaseEntity implements UserDetails {
         return this.email;
     }
 
-    public String getActualUsername() {
-        return this.username;
-    }
-
     @Override
     public boolean isEnabled() {
-        if (!this.isActive()) return false;
-        if (this.company != null && !this.company.isActive()) return false;
+        if (!this.isActive())
+            return false;
+        if (this.company != null && !this.company.isActive())
+            return false;
         return true;
     }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
     @PrePersist
     public void prePersist() {

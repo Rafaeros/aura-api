@@ -17,10 +17,9 @@ import br.rafaeros.aura.core.exception.ResourceNotFoundException;
 import br.rafaeros.aura.modules.device.model.Device;
 import br.rafaeros.aura.modules.device.model.DevicePosition;
 import br.rafaeros.aura.modules.device.repository.DeviceRepository;
-import br.rafaeros.aura.modules.telemetry.controller.dto.DeviceTelemetryRequestDTO;
-import br.rafaeros.aura.modules.telemetry.controller.dto.DeviceTelemetryResponseDTO;
-import br.rafaeros.aura.modules.telemetry.model.DeviceTelemetry;
-import br.rafaeros.aura.modules.telemetry.repository.DeviceTelemetryRepository;
+import br.rafaeros.aura.modules.telemetry.controller.dto.TelemetryDTO;
+import br.rafaeros.aura.modules.telemetry.model.Telemetry;
+import br.rafaeros.aura.modules.telemetry.repository.TelemetryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,21 +28,21 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DeviceTelemetryService {
 
-    private final DeviceTelemetryRepository deviceTelemetryRepository;
+    private final TelemetryRepository deviceTelemetryRepository;
     private final DeviceRepository deviceRepository;
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public DeviceTelemetryResponseDTO ingest(DeviceTelemetryRequestDTO request) {
+    public TelemetryDTO.Response ingest(TelemetryDTO.CreateRequest request) {
         Device device = deviceRepository.findByDevEui(request.devEui())
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + request.devEui()));
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado: " + request.devEui()));
 
         if (device.getUsersLink().isEmpty()) {
-            log.warn("Device {} has no linked users. Telemetry ignored.", request.devEui());
-            throw new BusinessException("Device not linked to any user.");
+            log.warn("Dispositivo {} não possui usuários vinculados. Telemetria ignorada.", request.devEui());
+            throw new BusinessException("Dispositivo não vinculado a nenhum usuário.");
         }
 
-        DeviceTelemetry telemetry = new DeviceTelemetry();
+        Telemetry telemetry = new Telemetry();
         telemetry.setDevice(device);
         telemetry.setSource(request.source());
         telemetry.setType(request.type());
@@ -57,22 +56,22 @@ public class DeviceTelemetryService {
             processLogLogic(device, request.type(), payloadNode);
 
         } catch (JsonProcessingException e) {
-            throw new BusinessException("Error serializing telemetry: " + e.getMessage());
+            throw new BusinessException("Erro ao serializar telemetria: " + e.getMessage());
         }
 
         telemetry = deviceTelemetryRepository.save(telemetry);
-        return DeviceTelemetryResponseDTO.fromEntity(telemetry);
+        return TelemetryDTO.Response.fromEntity(telemetry);
     }
 
     @Transactional(readOnly = true)
-    public List<DeviceTelemetryResponseDTO> findTop5ByDeviceId(Long deviceId) {
+    public List<TelemetryDTO.Response> findTop5ByDeviceId(Long deviceId) {
         if (!deviceRepository.existsById(Objects.requireNonNull(deviceId))) {
-            throw new ResourceNotFoundException("Device not found with ID: " + deviceId);
+            throw new ResourceNotFoundException("Dispositivo não encontrado com ID: " + deviceId);
         }
 
         return deviceTelemetryRepository.findTop5ByDeviceIdOrderByCreatedAtDesc(deviceId)
                 .stream()
-                .map(DeviceTelemetryResponseDTO::fromEntity)
+                .map(TelemetryDTO.Response::fromEntity)
                 .toList();
     }
 
@@ -95,6 +94,14 @@ public class DeviceTelemetryService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public Page<TelemetryDTO.Response> listHistory(Long deviceId, Pageable pageable) {
+        if (!deviceRepository.existsById(Objects.requireNonNull(deviceId))) {
+            throw new ResourceNotFoundException("Dispositivo não encontrado com ID: " + deviceId);
+        }
+        return deviceTelemetryRepository.findByDeviceIdOrderByCreatedAtDesc(deviceId, pageable).map(TelemetryDTO.Response::fromEntity);
+    }
+
     private void extractAndSaveLocation(Device device, JsonNode paramsNode) {
         try {
             JsonNode params = paramsNode.path("params");
@@ -111,7 +118,7 @@ public class DeviceTelemetryService {
                     position.setLatitude(lat);
                     position.setLongitude(lng);
                     device.addPosition(position);
-                    log.info("GPS Location updated for device {}: {}, {}", device.getDevEui(), lat, lng);
+                    log.info("Localização GPS atualizada para o dispositivo {}: {}, {}", device.getDevEui(), lat, lng);
                 }
             } else {
                 double lat = params.path("latitude").asDouble(params.path("lat").asDouble(0.0));
@@ -125,7 +132,7 @@ public class DeviceTelemetryService {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to extract location for device {}", device.getDevEui(), e);
+            log.error("Falha ao extrair localização do dispositivo {}", device.getDevEui(), e);
         }
     }
 
@@ -146,11 +153,11 @@ public class DeviceTelemetryService {
                 position.setLatitude(lat);
                 position.setLongitude(lng);
                 device.addPosition(position);
-                log.info("GPS Location updated (Uplink) for device {}: {}, {}", device.getDevEui(), lat, lng);
+                log.info("Localização GPS atualizada (Uplink) para o dispositivo {}: {}, {}", device.getDevEui(), lat, lng);
             }
 
         } catch (Exception e) {
-            log.error("Failed to extract uplink location for device {}", device.getDevEui(), e);
+            log.error("Falha ao extrair localização de uplink do dispositivo {}", device.getDevEui(), e);
         }
     }
 
@@ -171,19 +178,13 @@ public class DeviceTelemetryService {
                 position.setLatitude(lat);
                 position.setLongitude(lng);
                 device.addPosition(position);
-                log.info("GPS Location updated (Uplink) for device {}: {}, {}", device.getDevEui(), lat, lng);
+                log.info("Localização GPS atualizada (Uplink) para o dispositivo {}: {}, {}", device.getDevEui(), lat, lng);
             }
 
         } catch (Exception e) {
-            log.error("Failed to extract uplink location for device {}", device.getDevEui(), e);
+            log.error("Falha ao extrair localização de uplink do dispositivo {}", device.getDevEui(), e);
         }
     }
 
-    @Transactional(readOnly = true)
-    public Page<DeviceTelemetryResponseDTO> listHistory(Long deviceId, Pageable pageable) {
-        if (!deviceRepository.existsById(Objects.requireNonNull(deviceId))) {
-            throw new ResourceNotFoundException("Device not found with ID: " + deviceId);
-        }
-        return deviceTelemetryRepository.findByDeviceIdOrderByCreatedAtDesc(deviceId, pageable).map(DeviceTelemetryResponseDTO::fromEntity);
-    }
+
 }

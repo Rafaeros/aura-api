@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.modules.device.client.dto.EverynetDevice;
@@ -21,32 +20,33 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "device")
+@NoArgsConstructor
 public class Device extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("dev_eui")
-    @Column(name = "dev_eui", nullable = false, unique = true)
+    @Column( nullable = false, unique = true)
     private String devEui;
 
-    @Column(name = "dev_addr", nullable = false)
+    @Column( nullable = false)
     private String devAddr;
 
-    @Column(name = "app_eui", nullable = false)
+    @Column(nullable = false)
     private String appEui;
 
-    @Column(name = "nwks_key", nullable = false)
+    @Column(nullable = false)
     private String nwksKey;
 
-    @Column(name = "apps_key", nullable = false)
+    @Column( nullable = false)
     private String appsKey;
 
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -62,9 +62,6 @@ public class Device extends BaseEntity {
 
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeviceFeature> features;
-
-    public Device() {
-    }
 
     public static Device createFromEverynet(EverynetDevice externalData) {
         Device device = new Device();

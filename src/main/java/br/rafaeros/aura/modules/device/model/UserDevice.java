@@ -35,14 +35,14 @@ public class UserDevice extends BaseEntity {
     @JoinColumn(name = "device_id")
     private Device device;
 
-    @Column(name = "custom_name", nullable = false)
-    private String customName;
+    @Column(nullable = false)
+    private String name;
 
-    public UserDevice(User user, Device device, String customName) {
+    public UserDevice(User user, Device device, String name) {
         this.id = new UserDeviceId(user.getId(), device.getId());
         this.user = user;
         this.device = device;
-        this.customName = customName;
+        this.name = name;
     }
 
 }

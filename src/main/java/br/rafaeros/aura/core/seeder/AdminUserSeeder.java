@@ -54,7 +54,7 @@ public class AdminUserSeeder implements CommandLineRunner {
                     return companyRepository.save(newCompany);
                 });
         User admin = new User();
-        admin.setName(adminConfig.getName());
+        admin.setFirstName(adminConfig.getFirstName());
         admin.setLastName(adminConfig.getLastName());
         admin.setUsername(adminConfig.getUsername());
         admin.setEmail(adminConfig.getEmail());

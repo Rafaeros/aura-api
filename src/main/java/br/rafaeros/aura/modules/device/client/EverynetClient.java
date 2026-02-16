@@ -18,7 +18,7 @@ public class EverynetClient {
     private final ObjectMapper objectMapper;
 
     public EverynetClient(EverynetProperties properties, ObjectMapper objectMapper) {
-        String baseUrl = Objects.requireNonNull(properties.getBaseUrl(), "Everynet base URL cannot be null");
+        String baseUrl = Objects.requireNonNull(properties.getBaseUrl(), "URL base do Everynet não pode ser nula");
         this.objectMapper = objectMapper;
         this.restClient = RestClient.builder().baseUrl(baseUrl).build();
     }
@@ -37,21 +37,21 @@ public class EverynetClient {
                             HttpStatusCode::is4xxClientError,
                             (request, response) -> {
                                 throw new RuntimeException(
-                                        "Device not found on Everynet with EUI: " + devEui);
+                                        "Dispositivo não encontrado no Everynet com EUI: " + devEui);
                             })
                     .body(JsonNode.class);
 
             if (rootNode != null && rootNode.has("device")) {
                 JsonNode deviceNode = rootNode.get("device");
-                log.info("Device found on Everynet with EUI: " + devEui);
-                log.info("Device data: " + deviceNode);
+                log.info("Dispositivo encontrado no Everynet com EUI: " + devEui);
+                log.info("Dados do dispositivo: " + deviceNode);
                 return objectMapper.treeToValue(deviceNode, EverynetDevice.class);
             }
 
-            throw new RuntimeException("Response from Everynet does not contain 'device' key");
+            throw new RuntimeException("Resposta do Everynet não contém a chave 'device'");
 
         } catch (Exception e) {
-            throw new RuntimeException("Error communicating with Everynet: " + e.getMessage());
+            throw new RuntimeException("Erro ao se comunicar com Everynet: " + e.getMessage());
         }
     }
 }

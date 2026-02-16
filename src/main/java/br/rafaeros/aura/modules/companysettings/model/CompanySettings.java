@@ -1,9 +1,10 @@
-package br.rafaeros.aura.modules.company.model;
+package br.rafaeros.aura.modules.companysettings.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.rafaeros.aura.core.model.BaseEntity;
 import br.rafaeros.aura.core.security.CryptoConverter;
+import br.rafaeros.aura.modules.company.model.Company;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

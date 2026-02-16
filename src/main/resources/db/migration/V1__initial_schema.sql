@@ -1,4 +1,4 @@
-CREATE TABLE company (
+CREATE TABLE companies (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     cnpj VARCHAR(14) NOT NULL UNIQUE,
@@ -22,13 +22,13 @@ CREATE TABLE company_settings (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
-    CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id) REFERENCES company (id)
+    CONSTRAINT fk_company_settings_company FOREIGN KEY (company_id) REFERENCES companies (id)
 );
 
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -38,7 +38,7 @@ CREATE TABLE users (
     is_first_access BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
-    CONSTRAINT fk_users_company FOREIGN KEY (company_id) REFERENCES company (id)
+    CONSTRAINT fk_users_company FOREIGN KEY (company_id) REFERENCES companies (id)
 );
 
 CREATE TABLE device (
@@ -71,7 +71,7 @@ CREATE TABLE device_tags (
 CREATE TABLE user_device (
     user_id BIGINT NOT NULL,
     device_id BIGINT NOT NULL,
-    custom_name VARCHAR(255),
+    name VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,

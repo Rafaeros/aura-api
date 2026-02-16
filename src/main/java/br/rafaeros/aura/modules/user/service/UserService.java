@@ -4,8 +4,6 @@ import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,14 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
-import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
-import br.rafaeros.aura.modules.company.controller.dto.CompanySettingsResponseDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
-import br.rafaeros.aura.modules.user.controller.dto.UserCreateDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserProfileDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserResponseDTO;
-import br.rafaeros.aura.modules.user.controller.dto.UserUpdateDTO;
+import br.rafaeros.aura.modules.user.controller.dto.UserDTO;
 import br.rafaeros.aura.modules.user.model.User;
 import br.rafaeros.aura.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,128 +24,80 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String DEFAULT_PASSWORD = "mudar@123";
 
+    @Transactional
+    public UserDTO.Response create(UserDTO.CreateRequest request) {
+        boolean existsOpt = userRepository.existsByEmail(request.email());
+        if (existsOpt) {
+            throw new BusinessException("E-mail já cadastrado.");
+        }
+        Company company = companyRepository.findById(Objects.requireNonNull(request.companyId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+        User user = new User();
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
+        user.setRole(request.role());
+        user.setCompany(company);
+        User savedUser = userRepository.save(user);
+        return UserDTO.Response.fromEntity(savedUser);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDTO.Response> findAll(Pageable pageable) {
+        Pageable safePageable = Objects.requireNonNull(pageable);
+        return userRepository.findAll(safePageable).map(UserDTO.Response::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDTO.ProfileResponse findProfileById(Long id) {
+        User user = userRepository.findProfileById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+
+        return UserDTO.ProfileResponse.fromEntity(user);
+    }
+
+    @Transactional
+    public UserDTO.Response changePassword(Long id, UserDTO.ChangePasswordRequest request) {
+
+        if (request.newPassword().equals(request.currentPassword())) {
+            throw new BusinessException("A nova senha não pode ser igual à senha atual.");
+        }
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new BusinessException("A nova senha e a confirmação não coincidem.");
+        }
+
+        User user = userRepository.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário nao encontrado."));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new BusinessException("Senha atual incorreta.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        User savedUser = userRepository.save(user);
+        return UserDTO.Response.fromEntity(savedUser);
+    }
+
+
+    @Transactional
+    public void deleteById(Long id) {
+        User user = userRepository.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+        userRepository.delete(Objects.requireNonNull(user));
+    }
+
+    // Spring Security
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return repository.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
-    }
-
-    @Transactional
-    public UserResponseDTO create(UserCreateDTO dto) {
-        if (repository.existsByEmail(dto.email())) {
-            throw new BusinessException("Email '" + dto.email() + "' is already in use.");
-        }
-
-        if (repository.existsByUsername(dto.username())) {
-            throw new BusinessException("Username '" + dto.username() + "' is already taken.");
-        }
-
-        Long companyId = dto.companyId();
-        if (companyId == null) {
-            throw new BusinessException("Company ID is required.");
-        }
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + companyId));
-
-        User newUser = new User();
-        newUser.setEmail(dto.email());
-        newUser.setUsername(dto.username());
-        newUser.setRole(dto.role());
-        newUser.setCompany(company);
-        newUser.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
-
-        User saved = repository.save(newUser);
-
-        return UserResponseDTO.fromEntity(saved);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<UserResponseDTO> findAll(Pageable pageable) {
-        Pageable safePageable = Objects.requireNonNull(pageable);
-        return repository.findAll(safePageable).map(UserResponseDTO::fromEntity);
-    }
-
-    @Transactional(readOnly = true)
-    public UserResponseDTO findById(long id) {
-        User user = findEntityById(id);
-        return UserResponseDTO.fromEntity(user);
-    }
-
-    @Transactional(readOnly = true)
-    public User findByEmail(String email) {
-        return repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-    }
-
-    @Transactional(readOnly = true)
-    public UserProfileDTO findUserProfile(Authentication authentication) {
-        String email = authentication.getName();
-
-        boolean isAdminOrOwner = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_OWNER"));
-
-        User user = repository.findProfileByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
-
-        UserProfileDTO dto = UserProfileDTO.fromEntity(user);
-
-        if (!isAdminOrOwner && dto.company() != null && dto.company().settings() != null) {
-            CompanySettingsResponseDTO maskedSettings = dto.company().settings().maskSecrets();
-            CompanyResponseDTO maskedCompany = new CompanyResponseDTO(
-                    dto.company().id(), dto.company().name(), dto.company().cnpj(),
-                    dto.company().cep(), dto.company().addressNumber(), maskedSettings);
-            dto = new UserProfileDTO(dto.id(), dto.username(), dto.email(), maskedCompany);
-        }
-
-        return dto;
-    }
-
-    @Transactional
-    public UserResponseDTO update(Long id, UserUpdateDTO dto) {
-        if (id == null)
-            throw new BusinessException("User ID is required.");
-
-        User user = findEntityById(id);
-
-        if (dto.email() != null && !dto.email().isBlank() && !dto.email().equals(user.getEmail())) {
-            if (repository.existsByEmail(dto.email())) {
-                throw new BusinessException("Email already in use.");
-            }
-            user.setEmail(dto.email());
-        }
-
-        if (dto.username() != null && !dto.username().isBlank() && !dto.username().equals(user.getUsername())) {
-            if (repository.existsByUsername(dto.username())) {
-                throw new BusinessException("Username already taken.");
-            }
-            user.setUsername(dto.username());
-        }
-
-        if (dto.password() != null && !dto.password().isBlank()) {
-            user.setPassword(passwordEncoder.encode(dto.password()));
-        }
-
-        User updated = repository.save(Objects.requireNonNull(user));
-        return UserResponseDTO.fromEntity(updated);
-    }
-
-    @Transactional
-    public void deleteById(long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Cannot delete. User not found with ID: " + id);
-        }
-        repository.deleteById(id);
-    }
-
-    private User findEntityById(long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
 }

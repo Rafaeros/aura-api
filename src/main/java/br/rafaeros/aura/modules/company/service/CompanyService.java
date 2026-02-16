@@ -4,93 +4,64 @@ import java.util.Objects;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.aura.core.exception.BusinessException;
 import br.rafaeros.aura.core.exception.ResourceNotFoundException;
-import br.rafaeros.aura.modules.company.controller.dto.CompanyRequestDTO;
-import br.rafaeros.aura.modules.company.controller.dto.CompanyResponseDTO;
+import br.rafaeros.aura.modules.company.controller.dto.CompanyDTO;
 import br.rafaeros.aura.modules.company.model.Company;
 import br.rafaeros.aura.modules.company.repository.CompanyRepository;
-import br.rafaeros.aura.modules.user.model.User;
-import br.rafaeros.aura.modules.user.model.enums.Role;
-import br.rafaeros.aura.modules.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
-    private final UserRepository userRepository;
-
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository) {
-        this.companyRepository = companyRepository;
-        this.userRepository = userRepository;
-    }
 
     @Transactional
-    public CompanyResponseDTO create(CompanyRequestDTO dto) {
+    public CompanyDTO.Response create(CompanyDTO.CreateRequest dto) {
         if (companyRepository.existsByCnpj(dto.cnpj())) {
-            throw new BusinessException("Company with CNPJ " + dto.cnpj() + " already exists.");
+            throw new BusinessException("A Empresa com CNPJ " + dto.cnpj() + " já existe.");
         }
         Company company = new Company();
         company.setName(dto.name());
         company.setCnpj(dto.cnpj());
-        company.setCep(dto.cep());
-        company.setAddressNumber(dto.addressNumber());
 
-        Company saved = companyRepository.save(company);
-
-        return CompanyResponseDTO.fromEntity(saved);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<CompanyResponseDTO> findAll(Pageable pageable) {
-        Pageable safePageable = Objects.requireNonNull(pageable);
-        return companyRepository.findAll(safePageable)
-                .map(CompanyResponseDTO::fromEntity);
-    }
-
-    @Transactional(readOnly = true)
-    public CompanyResponseDTO findById(Long id, String email) {
-        if (id == null)
-            throw new BusinessException("Company ID is required.");
-
-        Company company = companyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + id));
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        boolean isAdmin = user.getRole() == Role.ADMIN;
-        boolean belongsToCompany = user.getCompany() != null && user.getCompany().getId().equals(id);
-
-        if (!isAdmin && !belongsToCompany) {
-            throw new AccessDeniedException("Access denied: You do not belong to this company.");
+        if (dto.cep() != null) {
+            company.setCep(dto.cep());
         }
 
-        return CompanyResponseDTO.fromEntity(company);
+        if (dto.addressNumber() != null) {
+            company.setAddressNumber(dto.addressNumber());
+        }
+
+        return CompanyDTO.Response.fromEntity(companyRepository.save(company));
     }
 
-    private Company findByIdInternal(Long id) {
-        if (id == null)
-            throw new BusinessException("Company ID is required.");
-        return companyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Company not found with ID: " + id));
+    @Transactional(readOnly = true)
+    public Page<CompanyDTO.Response> findAll(Pageable pageable) {
+        Pageable safePageable = Objects.requireNonNull(pageable);
+        return companyRepository.findAll(safePageable)
+                .map(CompanyDTO.Response::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public CompanyDTO.Response findById(Long id) {
+        Company company = findByIdInternal(id);
+
+        return CompanyDTO.Response.fromEntity(company);
     }
 
     @Transactional
-    public CompanyResponseDTO update(Long id, CompanyRequestDTO dto) {
-        if (id == null)
-            throw new BusinessException("Company ID is required.");
-
+    public CompanyDTO.Response update(Long id, CompanyDTO.UpdateRequest dto) {
         Company existing = findByIdInternal(id);
 
         if (dto.cnpj() != null && !dto.cnpj().isBlank()) {
             if (!dto.cnpj().equals(existing.getCnpj())) {
                 if (companyRepository.existsByCnpj(dto.cnpj())) {
-                    throw new BusinessException("The CNPJ " + dto.cnpj() + " is already in use.");
+                    throw new BusinessException("O CNPJ " + dto.cnpj() + " já está em uso.");
                 }
                 existing.setCnpj(dto.cnpj());
             }
@@ -104,19 +75,27 @@ public class CompanyService {
 
         Company updated = companyRepository.save(Objects.requireNonNull(existing));
 
-        return CompanyResponseDTO.fromEntity(updated);
+        return CompanyDTO.Response.fromEntity(updated);
     }
 
     @Transactional
-    public void toggleActive(Long id) {
+    public String toggleActive(Long id) {
         Company company = findByIdInternal(id);
         company.setActive(!company.isActive());
-        companyRepository.save(Objects.requireNonNull(company));
+        Company saved = companyRepository.save(Objects.requireNonNull(company));
+        return "Empresa " + (saved.isActive() ? "ativada" : "desativada") + " com sucesso.";
     }
 
     @Transactional
     public void deleteById(Long id) {
         Company company = findByIdInternal(id);
         companyRepository.delete(Objects.requireNonNull(company));
+    }
+
+    public Company findByIdInternal(Long id) {
+        if (id == null)
+            throw new BusinessException("O ID da empresa é obrigatório.");
+        return companyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com o ID: " + id));
     }
 }

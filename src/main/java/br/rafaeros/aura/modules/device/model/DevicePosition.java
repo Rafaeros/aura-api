@@ -1,7 +1,5 @@
 package br.rafaeros.aura.modules.device.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import br.rafaeros.aura.core.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,7 +29,6 @@ public class DevicePosition extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "device_id", nullable = false)
-    @JsonIgnore
     private Device device;
 
     public DevicePosition() {

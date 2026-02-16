@@ -9,12 +9,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "device_feature")
+@NoArgsConstructor
 public class DeviceFeature extends BaseEntity {
 
     @Id
@@ -28,6 +30,4 @@ public class DeviceFeature extends BaseEntity {
     @JoinColumn(name = "device_id")
     private Device device;
 
-    public DeviceFeature() {
-    }
 }

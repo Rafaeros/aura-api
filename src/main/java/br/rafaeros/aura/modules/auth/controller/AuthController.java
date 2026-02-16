@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.aura.core.dto.ApiResponse;
-import br.rafaeros.aura.modules.auth.controller.dto.AuthRequestDTO;
-import br.rafaeros.aura.modules.auth.controller.dto.AuthResponseDTO;
-import br.rafaeros.aura.modules.auth.controller.dto.FirstAccessRequestDTO;
+import br.rafaeros.aura.modules.auth.controller.dto.AuthDTO;
 import br.rafaeros.aura.modules.auth.service.AuthService;
 import br.rafaeros.aura.modules.user.model.User;
 import jakarta.validation.Valid;
@@ -24,15 +22,15 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/activate-account")
-    public ResponseEntity<ApiResponse<AuthResponseDTO>> activateAccount(@AuthenticationPrincipal User user,
-            @RequestBody @Valid FirstAccessRequestDTO request) {
-        AuthResponseDTO response = authService.activateAccount(user, request);
+    public ResponseEntity<ApiResponse<AuthDTO.Response>> activateAccount(
+            @RequestBody @Valid AuthDTO.FirstAccessRequest request, @AuthenticationPrincipal User user) {
+        AuthDTO.Response response = authService.activateAccount(request, user);
         return ResponseEntity.ok(ApiResponse.success("Conta ativada com sucesso.", response));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponseDTO>> login(@RequestBody @Valid AuthRequestDTO request) {
-        AuthResponseDTO response = authService.login(request);
+    public ResponseEntity<ApiResponse<AuthDTO.Response>> login(@RequestBody @Valid AuthDTO.Request request) {
+        AuthDTO.Response response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login realizado com sucesso.", response));
     }
 }
