@@ -1,3 +1,16 @@
+CREATE TABLE api_keys (
+    id BIGSERIAL PRIMARY KEY,
+    api_key VARCHAR(255) NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL,
+    authorities VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255)
+);
+
+
 CREATE TABLE companies (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -112,4 +125,37 @@ CREATE TABLE device_telemetry (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
     CONSTRAINT fk_telemetry_device FOREIGN KEY (device_id) REFERENCES device(id)
+);
+
+
+CREATE TABLE findmy_devices (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    hashed_public_key VARCHAR(255) NOT NULL UNIQUE,
+    private_key_base64 VARCHAR(500),
+    company_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT fk_findmy_device_company FOREIGN KEY (company_id) REFERENCES companies (id)
+);
+
+CREATE TABLE findmy_locations (
+    id BIGSERIAL PRIMARY KEY,
+    findmy_device_id BIGINT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    accuracy INTEGER,
+    confidence INTEGER,
+    battery_status VARCHAR(50),
+    timestamp TIMESTAMP NOT NULL,
+    published_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT fk_findmy_location_device FOREIGN KEY (findmy_device_id) REFERENCES findmy_devices (id) ON DELETE CASCADE
 );
