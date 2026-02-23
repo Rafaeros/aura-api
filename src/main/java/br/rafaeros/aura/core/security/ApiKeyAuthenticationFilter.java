@@ -35,6 +35,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         final String extractedApiKey = request.getHeader(API_KEY_HEADER);
+
         if (extractedApiKey == null) {
             filterChain.doFilter(request, response);
             return;
@@ -46,8 +47,14 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             ApiKey apiKey = apiKeyOpt.get();
             List<GrantedAuthority> authorities = AuthorityUtils
                     .commaSeparatedStringToAuthorityList(apiKey.getAuthorities());
+
+            ApiKeyPrincipal principal = new ApiKeyPrincipal(
+                apiKey.getId(),
+                apiKey.getCompany().getId(),
+                apiKey.getDescription()
+            );
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    "API_KEY_CLIENT",
+                    principal,
                     null,
                     authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
