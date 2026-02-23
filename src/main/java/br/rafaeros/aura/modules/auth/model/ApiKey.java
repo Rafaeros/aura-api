@@ -1,12 +1,9 @@
 package br.rafaeros.aura.modules.auth.model;
 
 import br.rafaeros.aura.core.model.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import br.rafaeros.aura.core.security.CryptoConverter; // Seu conversor
+import br.rafaeros.aura.modules.company.model.Company;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,6 +19,7 @@ public class ApiKey extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "api_key", nullable = false, unique = true, updatable = false)
     private String key;
 
@@ -29,5 +27,9 @@ public class ApiKey extends BaseEntity {
     private String description;
 
     @Column(nullable = false)
-    private String authorities;
+    private String authorities; 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 }
