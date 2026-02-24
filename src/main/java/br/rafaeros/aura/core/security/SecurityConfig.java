@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/forgot-password").permitAll()
                         .requestMatchers("/auth/activate-account").authenticated()
-                        .requestMatchers("/ble/**").hasAuthority("BLE:READ")
+                        .requestMatchers("/ble/**").authenticated()
                         .requestMatchers("/error/**").permitAll()
                         .anyRequest().authenticated())
 
