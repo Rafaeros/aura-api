@@ -6,7 +6,7 @@ import br.rafaeros.aura.modules.auth.model.ApiKey;
 
 public class ApiDTO {
 
-    public record CreateApiKeyRequest(String description, List<String> authorities) {
+    public record CreateApiKeyRequest(String description, List<String> authorities, Long companyId) {
     }
 
     public record ApiKeyResponse(String key, String description) {

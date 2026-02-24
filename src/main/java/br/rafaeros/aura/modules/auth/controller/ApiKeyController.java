@@ -27,7 +27,7 @@ public class ApiKeyController {
     public ResponseEntity<ApiResponse<ApiDTO.ApiKeyResponse>> createApiKey(
             @RequestBody ApiDTO.CreateApiKeyRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Chave de API criada com sucesso.",
-                apiKeyService.createApiKey(request.description(), request.authorities())));
+                apiKeyService.createApiKey(request)));
     }
 
     @DeleteMapping("/{id}")
