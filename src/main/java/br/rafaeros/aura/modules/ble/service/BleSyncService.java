@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,6 +31,7 @@ public class BleSyncService {
     @Value("${apple.password}")
     private String applePassword;
 
+    @Scheduled(fixedDelay = 1800000)
     @Async
     public void syncDevices() {
         List<BleDevice> devices = deviceRepository.findAll();
