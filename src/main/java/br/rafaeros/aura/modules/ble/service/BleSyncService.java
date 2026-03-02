@@ -3,6 +3,7 @@ package br.rafaeros.aura.modules.ble.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,6 +30,7 @@ public class BleSyncService {
     @Value("${apple.password}")
     private String applePassword;
 
+    @Async
     public void syncDevices() {
         List<BleDevice> devices = deviceRepository.findAll();
         if (devices.isEmpty()) {
