@@ -36,6 +36,7 @@ public class BleDevice extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Convert(converter = CryptoConverter.class)
     @Column(name = "hashed_public_key", nullable = false, unique = true)
     private String hashedPublicKey;
 
