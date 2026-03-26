@@ -46,6 +46,11 @@ public class CompanySettingsService {
     @Transactional(readOnly = true)
     public CompanySettingsDTO.MqttConnectionCredentials findMqttSettingsByCompanyId(Long companyId) {
         CompanySettings settings = findCompanySettingsByCompanyId(companyId);
+
+        if (settings.getMqttHost() == null || settings.getMqttHost().isBlank()) {
+            throw new br.rafaeros.aura.core.exception.BusinessException("As configurações de integração MQTT ainda não foram definidas para esta empresa.");
+        }
+
         return CompanySettingsDTO.MqttConnectionCredentials.fromEntity(settings);
     }
 

@@ -20,15 +20,14 @@ import br.rafaeros.aura.modules.telemetry.service.DeviceTelemetryService;
 import br.rafaeros.aura.modules.user.model.User;
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/devices")
+@RequiredArgsConstructor
 public class TelemetryController {
 
     private final DeviceTelemetryService deviceTelemetryService;
-
-    public TelemetryController(DeviceTelemetryService deviceTelemetryService) {
-        this.deviceTelemetryService = deviceTelemetryService;
-    }
 
     @PostMapping("/telemetry")
     @PreAuthorize("isAuthenticated()")

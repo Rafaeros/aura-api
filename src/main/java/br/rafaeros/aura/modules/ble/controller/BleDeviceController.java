@@ -44,7 +44,7 @@ public class BleDeviceController {
     public ResponseEntity<ApiResponse<Page<BleDeviceDTO.Response>>> getAll(
             @AuthenticationPrincipal ApiKeyPrincipal principal,
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Dispositivos lsitados com sucesso!",
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos listados com sucesso.",
                 bleService.findAllDevicesByCompanyId(principal.getCompanyId(), pageable)));
     }
 
@@ -56,7 +56,7 @@ public class BleDeviceController {
 
         BleDeviceDTO.DetailsResponse response = bleService.findById(id, principal.getCompanyId());
 
-        return ResponseEntity.ok(ApiResponse.success("Dispositivo listado com sucesso!", response));
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo listado com sucesso.", response));
     }
 
     @DeleteMapping("/{id}")
@@ -64,6 +64,6 @@ public class BleDeviceController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id,
             @AuthenticationPrincipal ApiKeyPrincipal principal) {
         bleService.delete(id, principal.getCompanyId());
-        return ResponseEntity.ok(ApiResponse.success("Dispositivo deletado com sucesso!"));
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo deletado com sucesso."));
     }
 }

@@ -92,7 +92,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
-        // Ideally, log the 'ex' stacktrace here before returning generic message
+        // Log the 'ex' stacktrace before returning generic message
+        ex.printStackTrace();
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Ocorreu um erro interno no servidor. Contate o suporte.", Severity.ERROR));

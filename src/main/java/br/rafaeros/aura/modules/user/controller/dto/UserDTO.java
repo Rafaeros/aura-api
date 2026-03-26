@@ -50,8 +50,8 @@ public class UserDTO {
                         CompanyDTO.Response company,
                         CompanySettingsDTO.Response settings) {
                 public static ProfileResponse fromEntity(User user) {
-
-                        var settingsDTO = (user.getCompany().getSettings() != null)
+                        var hasCompany = user.getCompany() != null;
+                        var settingsDTO = (hasCompany && user.getCompany().getSettings() != null)
                                         ? CompanySettingsDTO.Response.fromEntity(user.getCompany().getSettings(),
                                                         user.getRole())
                                         : null;
@@ -61,7 +61,7 @@ public class UserDTO {
                                         user.getLastName(),
                                         user.getUsername(),
                                         user.getEmail(),
-                                        CompanyDTO.Response.fromEntity(user.getCompany()),
+                                        hasCompany ? CompanyDTO.Response.fromEntity(user.getCompany()) : null,
                                         settingsDTO);
                 }
         }

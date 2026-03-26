@@ -6,7 +6,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.aura.core.dto.ApiResponse;
 import br.rafaeros.aura.modules.auth.controller.dto.AuthDTO;
@@ -14,12 +13,16 @@ import br.rafaeros.aura.modules.auth.service.AuthService;
 import br.rafaeros.aura.modules.user.model.User;
 import jakarta.validation.Valid;
 
+
+import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @PostMapping("/activate-account")
     public ResponseEntity<ApiResponse<AuthDTO.Response>> activateAccount(

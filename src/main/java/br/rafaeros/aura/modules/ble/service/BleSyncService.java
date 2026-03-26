@@ -48,6 +48,7 @@ public class BleSyncService {
 
         try {
             log.info("Iniciando sincronização de {} dispositivos Find My...", keys.size());
+
             String responseJson = restTemplate.postForObject(pythonWorkerUrl, request, String.class);
             
             log.info("Resposta do Python recebida com sucesso. Payload: {}", responseJson);

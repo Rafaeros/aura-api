@@ -56,6 +56,16 @@ public class CompanyController {
         return ResponseEntity.ok(ApiResponse.success("Empresa listada com sucesso.", company));
     }
 
+    @GetMapping({"/me", "/current"})
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<CompanyDTO.Response>> getMyCompany(@AuthenticationPrincipal User user) {
+        if (user.getCompany() == null) {
+            throw new br.rafaeros.aura.core.exception.ResourceNotFoundException("Usuário não possui empresa vinculada");
+        }
+        CompanyDTO.Response company = companyService.findById(user.getCompany().getId());
+        return ResponseEntity.ok(ApiResponse.success("Empresa logada listada com sucesso.", company));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CompanyDTO.Response>> update(

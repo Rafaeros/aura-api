@@ -15,7 +15,8 @@ public class CompanySettingsSecurity {
     }
 
     public boolean canViewSensitiveData(Long companyId, User user) {
-        return belongsToCompany(companyId, user) && user.getRole() == Role.OWNER;
+        return belongsToCompany(companyId, user) && 
+               (user.getRole() == Role.OWNER || user.getRole() == Role.ADMIN);
     }
 
     public boolean canEditSettings(Long companyId, User user) {

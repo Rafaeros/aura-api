@@ -73,10 +73,13 @@ public enum DeviceDTO {;
             String name,
             String devEui,
             String devAddr,
+            String appEui,
+            String nwksKey,
+            String appsKey,
             List<TagResponse> tags,
-            List<PositionResponse> recentPositions,
+            List<PositionResponse> positions,
             List<FeatureResponse> features,
-            List<TelemetryDTO.Response> recentLogs) {
+            List<TelemetryDTO.Response> logs) {
         
         public static DetailsResponse fromEntity(String customName, Device device,
                 List<DevicePosition> positions,
@@ -101,6 +104,9 @@ public enum DeviceDTO {;
                     customName,
                     device.getDevEui(),
                     device.getDevAddr(),
+                    device.getAppEui(),
+                    device.getNwksKey(),
+                    device.getAppsKey(),
                     safeTags,
                     safePositions,
                     safeFeatures,

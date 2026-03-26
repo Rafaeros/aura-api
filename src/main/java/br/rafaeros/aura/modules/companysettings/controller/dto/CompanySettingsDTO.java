@@ -32,7 +32,7 @@ public class CompanySettingsDTO {
             String subscribeTopic,
             String publishTopic) {
         public static Response fromEntity(CompanySettings settings, Role userRole) {
-            boolean canViewSecrets = (userRole == Role.OWNER);
+            boolean canViewSecrets = (userRole == Role.OWNER || userRole == Role.ADMIN);
             return new Response(
                     canViewSecrets ? settings.getEverynetAccessToken() : null,
                     settings.getMqttHost(),

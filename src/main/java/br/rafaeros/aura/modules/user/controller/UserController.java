@@ -50,6 +50,12 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Usuário listado com sucesso.", userService.findProfileById(id)));
     }
 
+    @GetMapping({"/me", "/current"})
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<UserDTO.ProfileResponse>> getMe(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(ApiResponse.success("Usuário logado listado com sucesso.", userService.findProfileById(user.getId())));
+    }
+
     @PatchMapping("/{id}/change-password")
     @PreAuthorize("@userSecurity.canChangePassword(#id, #user)")
     public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable Long id,
