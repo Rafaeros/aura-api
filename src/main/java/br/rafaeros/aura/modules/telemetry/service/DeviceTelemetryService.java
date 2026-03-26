@@ -178,11 +178,11 @@ public class DeviceTelemetryService {
                 position.setLatitude(lat);
                 position.setLongitude(lng);
                 device.addPosition(position);
-                log.info("Localização GPS atualizada (Uplink) para o dispositivo {}: {}, {}", device.getDevEui(), lat, lng);
+                log.info("Localização GPS atualizada (Downlink) para o dispositivo {}: {}, {}", device.getDevEui(), lat, lng);
             }
 
         } catch (Exception e) {
-            log.error("Falha ao extrair localização de uplink do dispositivo {}", device.getDevEui(), e);
+            log.error("Falha ao extrair localização de downlink do dispositivo {}", device.getDevEui(), e);
         }
     }
 

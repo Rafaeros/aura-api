@@ -52,6 +52,13 @@ public class DeviceController {
         return ResponseEntity.ok(ApiResponse.success("Dispositivo encontrado com sucesso.", device));
     }
 
+    @GetMapping("/exists/{devEui}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Boolean>> checkIfExists(@PathVariable String devEui) {
+        boolean exists = deviceService.existsByDevEui(devEui);
+        return ResponseEntity.ok(ApiResponse.success("Status de existência do dispositivo retornado com sucesso", exists));
+    }
+
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@deviceSecurity.canUnlinkDevice(#id, #user)")

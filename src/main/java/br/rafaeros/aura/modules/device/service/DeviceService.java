@@ -68,6 +68,11 @@ public class DeviceService {
         return deviceResponse;
     }
 
+    @Transactional(readOnly = true)
+    public boolean existsByDevEui(String devEui) {
+        return deviceRepository.existsByDevEui(devEui);
+    }
+
     public DeviceDTO.DetailsResponse findByDevEui(String devEui, String email) {
         Device device = deviceRepository.findByDevEui(devEui)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado com DevEui: " + devEui));
